@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { connectSocket, disconnectSocket } from '@/services/socket';
+import { requestNotificationPermission, showBrowserNotification } from '@/utils/notifications';
 import type {
   AppNotification,
   SocketProblemaSegnalato,
@@ -58,6 +59,7 @@ export function useSocket() {
 
     socket.on('connect', () => {
       setConnected(true);
+      requestNotificationPermission();
     });
 
     socket.on('disconnect', () => {
@@ -82,6 +84,18 @@ export function useSocket() {
 
       if (isBloccante) {
         playAlertSound();
+        showBrowserNotification(
+          'PROBLEMA BLOCCANTE',
+          `Ord. ${data.numero_conferma} - ${data.tipo_problema}`,
+          `problema-${data.problema_id}`,
+          true, // requireInteraction for bloccante
+        );
+      } else {
+        showBrowserNotification(
+          'Nuovo problema segnalato',
+          `${data.tipo_problema} - ${data.numero_conferma}`,
+          `problema-${data.problema_id}`,
+        );
       }
 
       // Invalidate relevant queries
@@ -104,6 +118,11 @@ export function useSocket() {
         read: false,
       };
       addNotification(notification);
+      showBrowserNotification(
+        'Materiale arrivato',
+        `${label} - ${data.numero_conferma}`,
+        `materiale-${data.materiale_id}`,
+      );
 
       queryClient.invalidateQueries({ queryKey: ['materiali'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -123,6 +142,11 @@ export function useSocket() {
         read: false,
       };
       addNotification(notification);
+      showBrowserNotification(
+        'Fase completata',
+        `${data.nome_fase} - ${data.numero_conferma}`,
+        `fase-${data.fase_id}`,
+      );
 
       queryClient.invalidateQueries({ queryKey: ['fasi'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -142,6 +166,11 @@ export function useSocket() {
         read: false,
       };
       addNotification(notification);
+      showBrowserNotification(
+        'Problema risolto',
+        `${data.numero_conferma} - Risolto da ${data.risolto_da_nome}`,
+        `problema-risolto-${data.problema_id}`,
+      );
 
       queryClient.invalidateQueries({ queryKey: ['problemi'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });

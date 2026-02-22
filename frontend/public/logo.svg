@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#1e293b"/>
+  <text x="256" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="120" fill="#f8fafc">M4</text>
+  <rect x="96" y="240" width="320" height="4" rx="2" fill="#3b82f6"/>
+  <text x="256" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-weight="600" font-size="56" fill="#94a3b8">METAL</text>
+  <text x="256" y="400" text-anchor="middle" font-family="Arial, sans-serif" font-weight="400" font-size="40" fill="#64748b">4.0</text>
+</svg>

@@ -6,3 +6,17 @@ dist/
 Thumbs.db
 .vite/
 *.tsbuildinfo
+
+# Test
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Credenziali
+.credentials.txt
+*.pem
+*.key

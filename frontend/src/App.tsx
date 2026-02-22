@@ -15,6 +15,7 @@ import { OrdineFormPage } from '@/pages/OrdineFormPage';
 import { MaterialiPage } from '@/pages/MaterialiPage';
 import { ProblemiPage } from '@/pages/ProblemiPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { InstallPrompt } from '@/components/common/InstallPrompt';
 import { Loader2 } from 'lucide-react';
 
 const queryClient = new QueryClient({
@@ -108,6 +109,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AppRoutes />
+        <InstallPrompt />
       </BrowserRouter>
     </QueryClientProvider>
   );
