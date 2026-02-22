@@ -41,7 +41,7 @@ services:
     staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
-        value: https://metal40-backend.onrender.com
+        value: https://metal40-backend.onrender.com/api
     headers:
       - path: /*
         name: X-Frame-Options
