@@ -470,13 +470,6 @@ router.delete(
     const ordine = await prisma.ordine.findUnique({ where: { id } });
     if (!ordine) throw new NotFoundError('Ordine non trovato');
 
-    // Regola: non eliminare ordini spediti o pronti alla spedizione
-    if (ordine.stato === 'spedito' || ordine.stato === 'pronto_spedizione') {
-      throw new ValidationError(
-        `Impossibile eliminare un ordine con stato "${ordine.stato}"`,
-      );
-    }
-
     await prisma.$transaction(async (tx) => {
       // Log SENZA ordine_id (altrimenti cascade delete lo rimuoverebbe)
       await tx.logAttivita.create({

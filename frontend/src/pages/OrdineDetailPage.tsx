@@ -47,8 +47,6 @@ export function OrdineDetailPage() {
     });
   }
 
-  const canDelete = isUfficio && ordine.stato !== 'spedito' && ordine.stato !== 'pronto_spedizione';
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -71,12 +69,10 @@ export function OrdineDetailPage() {
               <Pencil className="mr-2 h-4 w-4" />
               Modifica
             </Button>
-            {canDelete && (
-              <Button variant="destructive" onClick={() => setShowDelete(true)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Elimina
-              </Button>
-            )}
+            <Button variant="destructive" onClick={() => setShowDelete(true)}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Elimina
+            </Button>
           </div>
         )}
       </div>
