@@ -84,7 +84,14 @@ export async function extractOrderFromPdf(pdfBuffer: Buffer): Promise<ExtractedO
   }
 
   try {
-    const parsed = JSON.parse(textBlock.text) as ExtractedOrderData;
+    // Rimuovi eventuale wrapping markdown (```json ... ```)
+    let jsonText = textBlock.text.trim();
+    const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonText = codeBlockMatch[1].trim();
+    }
+
+    const parsed = JSON.parse(jsonText) as ExtractedOrderData;
     logger.info('Dati estratti da PDF con successo', { numero_conferma: parsed.numero_conferma });
     return parsed;
   } catch {
