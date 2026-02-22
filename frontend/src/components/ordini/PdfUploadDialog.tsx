@@ -8,7 +8,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { uploadPdf, type PdfUploadResponse, type ExtractedOrderData } from '@/services/upload';
+import { uploadPdf, type PdfUploadResponse } from '@/services/upload';
+import type { MaterialePdf } from '@/services/ordini';
 import { TIPI_TELAIO_LABELS } from '@/utils/constants';
 import { FileUp, Loader2, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
 
@@ -29,22 +30,37 @@ function isVerniciaturaNecessaria(coloreEsterno: string, coloreInterno: string):
   return !extStandard || !intStandard;
 }
 
-function buildNoteFromExtracted(data: ExtractedOrderData): string {
-  const parts: string[] = [];
+function buildMaterialiFromExtracted(data: { pannello_esterno_tipo: string; pannello_esterno_colore: string; pannello_interno_tipo: string; pannello_interno_colore: string; mostrine: string; kit_imbotte: string; vetro: string; maniglione: string }): MaterialePdf[] {
+  const materiali: MaterialePdf[] = [];
 
-  if (data.pannello_esterno_tipo || data.pannello_esterno_colore) {
-    parts.push(`Pannello esterno: ${[data.pannello_esterno_tipo, data.pannello_esterno_colore].filter(Boolean).join(' - ')}`);
+  if (data.pannello_esterno_tipo) {
+    materiali.push({
+      tipo_materiale: 'pannello_esterno',
+      sottotipo: data.pannello_esterno_tipo.toLowerCase(),
+      note: data.pannello_esterno_colore || null,
+    });
   }
-  if (data.pannello_interno_tipo || data.pannello_interno_colore) {
-    parts.push(`Pannello interno: ${[data.pannello_interno_tipo, data.pannello_interno_colore].filter(Boolean).join(' - ')}`);
+  if (data.pannello_interno_tipo) {
+    materiali.push({
+      tipo_materiale: 'pannello_interno_speciale',
+      sottotipo: data.pannello_interno_tipo.toLowerCase(),
+      note: data.pannello_interno_colore || null,
+    });
   }
-  if (data.mostrine) parts.push(`Mostrine: ${data.mostrine}`);
-  if (data.kit_imbotte) parts.push(`Kit imbotte: ${data.kit_imbotte}`);
-  if (data.vetro) parts.push(`Vetro: ${data.vetro}`);
-  if (data.maniglione) parts.push(`Maniglione: ${data.maniglione}`);
-  if (data.note) parts.push(`Note PDF: ${data.note}`);
+  if (data.mostrine) {
+    materiali.push({ tipo_materiale: 'mostrine', note: data.mostrine });
+  }
+  if (data.kit_imbotte) {
+    materiali.push({ tipo_materiale: 'kit_imbotte', note: data.kit_imbotte });
+  }
+  if (data.vetro) {
+    materiali.push({ tipo_materiale: 'vetro', note: data.vetro });
+  }
+  if (data.maniglione) {
+    materiali.push({ tipo_materiale: 'maniglione', note: data.maniglione });
+  }
 
-  return parts.join('\n');
+  return materiali;
 }
 
 function mapTipoTelaio(raw: string): string {
@@ -124,6 +140,8 @@ export function PdfUploadDialog({ open, onOpenChange }: PdfUploadDialogProps) {
     const coloreEst = extracted?.colore_telaio_esterno || '';
     const coloreInt = extracted?.colore_telaio_interno || '';
 
+    const materialiPdf = extracted ? buildMaterialiFromExtracted(extracted) : [];
+
     const defaultValues: Record<string, unknown> = {
       numero_conferma: extracted?.numero_conferma || '',
       cliente: extracted?.cliente || '',
@@ -131,7 +149,7 @@ export function PdfUploadDialog({ open, onOpenChange }: PdfUploadDialogProps) {
       colore_telaio_esterno: coloreEst,
       colore_telaio_interno: coloreInt,
       verniciatura_necessaria: extracted ? isVerniciaturaNecessaria(coloreEst, coloreInt) : false,
-      note_generali: extracted ? buildNoteFromExtracted(extracted) : '',
+      note_generali: extracted?.note || '',
     };
 
     onOpenChange(false);
@@ -139,6 +157,7 @@ export function PdfUploadDialog({ open, onOpenChange }: PdfUploadDialogProps) {
       state: {
         defaultValues,
         pdfPath: result.pdf_key,
+        materialiPdf,
       },
     });
   }

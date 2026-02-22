@@ -4,10 +4,12 @@ import { OrdineForm } from '@/components/ordini/OrdineForm';
 import { LoadingState } from '@/components/common/LoadingState';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import type { MaterialePdf } from '@/services/ordini';
 
 interface LocationState {
   defaultValues?: Record<string, unknown>;
   pdfPath?: string;
+  materialiPdf?: MaterialePdf[];
 }
 
 export function OrdineFormPage() {
@@ -20,6 +22,7 @@ export function OrdineFormPage() {
   const locationState = (location.state as LocationState) || {};
   const pdfDefaultValues = locationState.defaultValues;
   const pdfPath = locationState.pdfPath;
+  const materialiPdf = locationState.materialiPdf;
 
   const { data: ordine, isLoading } = useOrdine(ordineId);
   const createMutation = useCreateOrdine();
@@ -47,7 +50,9 @@ export function OrdineFormPage() {
         { onSuccess: () => navigate(`/ordini/${ordineId}`) }
       );
     } else {
-      const submitData = pdfPath ? { ...data, pdf_path: pdfPath } : data;
+      let submitData = { ...data };
+      if (pdfPath) submitData.pdf_path = pdfPath;
+      if (materialiPdf && materialiPdf.length > 0) submitData.materiali_pdf = materialiPdf;
       createMutation.mutate(submitData as unknown as Parameters<typeof createMutation.mutate>[0], {
         onSuccess: (newOrdine) => navigate(`/ordini/${newOrdine.id}`),
       });
@@ -74,6 +79,7 @@ export function OrdineFormPage() {
         ordine={ordine}
         defaultValues={pdfDefaultValues}
         pdfPath={pdfPath}
+        materialiPdf={materialiPdf}
         onSubmit={handleSubmit}
         loading={createMutation.isPending || updateMutation.isPending}
       />

@@ -6,7 +6,7 @@ Questo file fornisce indicazioni a Claude Code (claude.ai/code) per lavorare con
 
 **Metal 4.0** - Sistema di tracciamento produzione per Metal 4.0 S.r.l.s., produttore di porte blindate su misura (10 dipendenti). Digitalizza il processo produttivo attualmente gestito su fogli cartacei in una web app full-stack con aggiornamenti real-time e supporto PWA.
 
-**Stato attuale:** Fase di specifica. Tutta la documentazione è completa; l'implementazione del codice segue una roadmap a 17 fasi in `METAL40_CLAUDE_CODE_INSTRUCTIONS.md`.
+**Stato attuale:** Tutte le 17 fasi della roadmap completate. App in produzione su Render.com. Funzionalità extra (importazione ordini da PDF con AI) implementata.
 
 ## File di Documentazione
 
@@ -113,7 +113,9 @@ Seguire la roadmap sequenziale a 17 fasi. Ogni fase ha obiettivo, file da creare
 
 ## Variabili d'Ambiente
 
-Backend richiede: `DATABASE_URL`, `JWT_SECRET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT`, `R2_PUBLIC_URL`, `ANTHROPIC_API_KEY`, `FRONTEND_URL`, `PORT`
+Backend richiede: `DATABASE_URL`, `JWT_SECRET`, `ANTHROPIC_API_KEY`, `FRONTEND_URL`, `PORT`
+
+Backend opzionali (Cloudflare R2, se non presenti l'upload file viene saltato): `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT`, `R2_PUBLIC_URL`
 
 Frontend richiede: `VITE_API_URL`
 
@@ -132,3 +134,31 @@ Template in `backend/.env.example` e `frontend/.env.example`.
 ## Eventi WebSocket (Socket.io)
 
 Il server emette nella room `ufficio`: `problema_segnalato`, `materiale_arrivato`, `fase_completata`, `problema_risolto`
+
+## Importazione Ordini da PDF (Claude AI)
+
+Funzionalità che permette all'ufficio di caricare un PDF della conferma d'ordine e creare automaticamente un ordine con i dati estratti dall'AI.
+
+**Flusso:**
+1. Pagina Ordini → bottone "Importa da PDF" (solo ruolo `ufficio`)
+2. Dialog modale con zona drag & drop per upload PDF (max 10MB)
+3. Backend: Multer riceve il file → upload su R2 (opzionale) → Claude AI estrae i dati
+4. Dialog mostra i dati estratti in tabella per revisione
+5. Bottone "Crea Ordine con questi dati" → naviga a `/ordini/nuovo` con dati pre-compilati via `location.state`
+6. Form ordine pre-compilato con banner "Dati importati da PDF"
+
+**File coinvolti:**
+- `backend/src/utils/claude.ts` - Prompt di estrazione + parsing risposta (strip markdown code blocks)
+- `backend/src/utils/r2.ts` - Upload R2 (opzionale, fallback se non configurato)
+- `backend/src/routes/upload.ts` - Endpoint `POST /api/upload/pdf`
+- `frontend/src/services/upload.ts` - Tipi `ExtractedOrderData`, `PdfUploadResponse`
+- `frontend/src/components/ordini/PdfUploadDialog.tsx` - Dialog upload + revisione dati AI
+- `frontend/src/pages/OrdiniPage.tsx` - Bottone "Importa da PDF"
+- `frontend/src/pages/OrdineFormPage.tsx` - Lettura `location.state` per dati pre-compilati + `pdf_path`
+- `frontend/src/components/ordini/OrdineForm.tsx` - Banner importazione PDF, prop `pdfPath`
+
+**Mapping dati AI → form:**
+- `numero_conferma`, `cliente`, `colore_telaio_esterno`, `colore_telaio_interno` → campi diretti
+- `tipo_telaio` → mappato ai valori enum DB (`standard_falsotelaio`, `ristrutturazione_l`, `ristrutturazione_z`, `falsotelaio_non_nostro`)
+- `pannello_*`, `mostrine`, `kit_imbotte`, `vetro`, `maniglione`, `note` → aggregati in `note_generali`
+- Auto-detection verniciatura: se colore esterno/interno NON contiene "marrone" o "bianco" → `verniciatura_necessaria = true`

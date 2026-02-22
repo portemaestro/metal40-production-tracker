@@ -15,8 +15,18 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TIPI_TELAIO_LABELS } from '@/utils/constants';
-import { FileText } from 'lucide-react';
+import { FileText, Package } from 'lucide-react';
 import type { Ordine } from '@/types';
+import type { MaterialePdf } from '@/services/ordini';
+
+const MATERIALE_LABELS: Record<string, string> = {
+  pannello_esterno: 'Pannello Esterno',
+  pannello_interno_speciale: 'Pannello Interno',
+  mostrine: 'Mostrine',
+  kit_imbotte: 'Kit Imbotte',
+  vetro: 'Vetro',
+  maniglione: 'Maniglione',
+};
 
 const ordineFormSchema = z
   .object({
@@ -44,11 +54,12 @@ interface OrdineFormProps {
   defaultValues?: Partial<OrdineFormValues>;
   ordine?: Ordine;
   pdfPath?: string;
+  materialiPdf?: MaterialePdf[];
   onSubmit: (data: OrdineFormValues) => void;
   loading?: boolean;
 }
 
-export function OrdineForm({ defaultValues, ordine, pdfPath, onSubmit, loading }: OrdineFormProps) {
+export function OrdineForm({ defaultValues, ordine, pdfPath, materialiPdf, onSubmit, loading }: OrdineFormProps) {
   const isEditing = !!ordine;
 
   const {
@@ -95,10 +106,34 @@ export function OrdineForm({ defaultValues, ordine, pdfPath, onSubmit, loading }
       <Card>
         <CardContent className="pt-6 space-y-4">
           {pdfPath && (
-            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <FileText className="h-4 w-4 text-blue-600" />
-              <span className="text-sm text-blue-700">Dati importati da PDF - verifica e completa i campi</span>
-              <Badge variant="outline" className="ml-auto text-blue-600 border-blue-300">PDF</Badge>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <FileText className="h-4 w-4 text-blue-600" />
+                <span className="text-sm text-blue-700">Dati importati da PDF - verifica e completa i campi</span>
+                <Badge variant="outline" className="ml-auto text-blue-600 border-blue-300">PDF</Badge>
+              </div>
+              {materialiPdf && materialiPdf.length > 0 && (
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Package className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-700">Materiali da creare automaticamente</span>
+                  </div>
+                  <ul className="space-y-1">
+                    {materialiPdf.map((m, i) => {
+                      const isLaminato = m.sottotipo?.toLowerCase() === 'laminato';
+                      return (
+                        <li key={i} className={`text-sm flex items-center gap-2 ${isLaminato ? 'text-muted-foreground line-through' : 'text-green-800'}`}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+                          <span className="font-medium">{MATERIALE_LABELS[m.tipo_materiale] || m.tipo_materiale}</span>
+                          {m.sottotipo && <span>({m.sottotipo})</span>}
+                          {m.note && <span className="text-muted-foreground">- {m.note}</span>}
+                          {isLaminato && <Badge variant="outline" className="text-xs">a magazzino</Badge>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

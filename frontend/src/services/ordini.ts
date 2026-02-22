@@ -9,6 +9,12 @@ export interface ListOrdiniParams {
   search?: string;
 }
 
+export interface MaterialePdf {
+  tipo_materiale: string;
+  sottotipo?: string | null;
+  note?: string | null;
+}
+
 export interface CreateOrdineData {
   numero_conferma: string;
   cliente: string;
@@ -23,6 +29,7 @@ export interface CreateOrdineData {
   data_tassativa?: string | null;
   pdf_path?: string | null;
   note_generali?: string | null;
+  materiali_pdf?: MaterialePdf[];
 }
 
 export interface UpdateOrdineData {

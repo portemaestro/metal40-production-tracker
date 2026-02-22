@@ -33,6 +33,11 @@ const createOrdineSchema = z
       .nullable(),
     pdf_path: z.string().optional().nullable(),
     note_generali: z.string().optional().nullable(),
+    materiali_pdf: z.array(z.object({
+      tipo_materiale: z.string(),
+      sottotipo: z.string().optional().nullable(),
+      note: z.string().optional().nullable(),
+    })).optional(),
   })
   .refine((data) => !data.urgente || data.data_tassativa, {
     message: 'Data tassativa obbligatoria per ordini urgenti',
@@ -272,6 +277,25 @@ router.post(
           stato: 'da_fare',
         })),
       });
+
+      // Crea materiali da PDF (se presenti)
+      if (data.materiali_pdf && data.materiali_pdf.length > 0) {
+        // Escludi laminato (a magazzino, non tracciato)
+        const materialiDaCreare = data.materiali_pdf.filter(
+          (m: { sottotipo?: string | null }) => m.sottotipo?.toLowerCase() !== 'laminato'
+        );
+        if (materialiDaCreare.length > 0) {
+          await tx.materiale.createMany({
+            data: materialiDaCreare.map((m: { tipo_materiale: string; sottotipo?: string | null; note?: string | null }) => ({
+              ordine_id: nuovoOrdine.id,
+              tipo_materiale: m.tipo_materiale,
+              sottotipo: m.sottotipo ?? null,
+              note: m.note ?? null,
+              necessario: true,
+            })),
+          });
+        }
+      }
 
       // Audit log
       await tx.logAttivita.create({
