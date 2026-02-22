@@ -13,7 +13,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { TIPI_TELAIO_LABELS } from '@/utils/constants';
+import { FileText } from 'lucide-react';
 import type { Ordine } from '@/types';
 
 const ordineFormSchema = z
@@ -41,11 +43,12 @@ type OrdineFormValues = z.infer<typeof ordineFormSchema>;
 interface OrdineFormProps {
   defaultValues?: Partial<OrdineFormValues>;
   ordine?: Ordine;
+  pdfPath?: string;
   onSubmit: (data: OrdineFormValues) => void;
   loading?: boolean;
 }
 
-export function OrdineForm({ defaultValues, ordine, onSubmit, loading }: OrdineFormProps) {
+export function OrdineForm({ defaultValues, ordine, pdfPath, onSubmit, loading }: OrdineFormProps) {
   const isEditing = !!ordine;
 
   const {
@@ -91,6 +94,13 @@ export function OrdineForm({ defaultValues, ordine, onSubmit, loading }: OrdineF
     <form onSubmit={handleSubmit(handleFormSubmit)}>
       <Card>
         <CardContent className="pt-6 space-y-4">
+          {pdfPath && (
+            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <FileText className="h-4 w-4 text-blue-600" />
+              <span className="text-sm text-blue-700">Dati importati da PDF - verifica e completa i campi</span>
+              <Badge variant="outline" className="ml-auto text-blue-600 border-blue-300">PDF</Badge>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Numero conferma */}
             <div className="space-y-2">

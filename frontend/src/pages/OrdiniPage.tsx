@@ -12,8 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, FileUp } from 'lucide-react';
 import { STATI_ORDINE_LABELS } from '@/utils/constants';
+import { PdfUploadDialog } from '@/components/ordini/PdfUploadDialog';
 
 export function OrdiniPage() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export function OrdiniPage() {
   const [search, setSearch] = useState('');
   const [stato, setStato] = useState<string>('');
   const [urgente, setUrgente] = useState<string>('');
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
 
   const { data, isLoading } = useOrdini({
     page,
@@ -41,10 +43,16 @@ export function OrdiniPage() {
           <p className="text-muted-foreground">Gestione ordini di produzione</p>
         </div>
         {isUfficio && (
-          <Button onClick={() => navigate('/ordini/nuovo')}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuovo Ordine
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setPdfDialogOpen(true)}>
+              <FileUp className="mr-2 h-4 w-4" />
+              Importa da PDF
+            </Button>
+            <Button onClick={() => navigate('/ordini/nuovo')}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuovo Ordine
+            </Button>
+          </div>
         )}
       </div>
 
@@ -93,6 +101,9 @@ export function OrdiniPage() {
           onPageChange: setPage,
         } : undefined}
       />
+
+      {/* Dialog importa PDF */}
+      <PdfUploadDialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen} />
     </div>
   );
 }

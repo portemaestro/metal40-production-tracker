@@ -1,15 +1,25 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useOrdine, useCreateOrdine, useUpdateOrdine } from '@/hooks/useOrdini';
 import { OrdineForm } from '@/components/ordini/OrdineForm';
 import { LoadingState } from '@/components/common/LoadingState';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
+interface LocationState {
+  defaultValues?: Record<string, unknown>;
+  pdfPath?: string;
+}
+
 export function OrdineFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const isEditing = !!id;
   const ordineId = parseInt(id || '0');
+
+  const locationState = (location.state as LocationState) || {};
+  const pdfDefaultValues = locationState.defaultValues;
+  const pdfPath = locationState.pdfPath;
 
   const { data: ordine, isLoading } = useOrdine(ordineId);
   const createMutation = useCreateOrdine();
@@ -37,7 +47,8 @@ export function OrdineFormPage() {
         { onSuccess: () => navigate(`/ordini/${ordineId}`) }
       );
     } else {
-      createMutation.mutate(data as unknown as Parameters<typeof createMutation.mutate>[0], {
+      const submitData = pdfPath ? { ...data, pdf_path: pdfPath } : data;
+      createMutation.mutate(submitData as unknown as Parameters<typeof createMutation.mutate>[0], {
         onSuccess: (newOrdine) => navigate(`/ordini/${newOrdine.id}`),
       });
     }
@@ -61,6 +72,8 @@ export function OrdineFormPage() {
 
       <OrdineForm
         ordine={ordine}
+        defaultValues={pdfDefaultValues}
+        pdfPath={pdfPath}
         onSubmit={handleSubmit}
         loading={createMutation.isPending || updateMutation.isPending}
       />

@@ -12,7 +12,7 @@ Rispondi SOLO con JSON valido, senza markdown o altro testo.
 Campi da estrarre:
 - numero_conferma: string (numero conferma ordine)
 - cliente: string (nome cliente)
-- tipo_telaio: string (una di: "standard_murato", "standard_falsotelaio", "standard_controtelaio", "monoblocco")
+- tipo_telaio: string (una di: "standard_falsotelaio", "ristrutturazione_l", "ristrutturazione_z", "falsotelaio_non_nostro")
 - colore_telaio_esterno: string
 - colore_telaio_interno: string
 - pannello_esterno_tipo: string (es: "PVC", "Alluminio", "Okoume", "MDF", "Laminato")
