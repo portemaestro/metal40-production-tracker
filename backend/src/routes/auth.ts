@@ -24,6 +24,26 @@ const loginLimiter = rateLimit({
   },
 });
 
+// ── GET /api/auth/users ── (pubblico, per dropdown login)
+router.get(
+  '/users',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const users = await prisma.user.findMany({
+      where: { attivo: true },
+      select: {
+        id: true,
+        nome: true,
+        cognome: true,
+        email: true,
+        ruolo: true,
+      },
+      orderBy: [{ ruolo: 'asc' }, { cognome: 'asc' }],
+    });
+
+    return success(res, { users });
+  }),
+);
+
 // ── POST /api/auth/login ──
 router.post(
   '/login',

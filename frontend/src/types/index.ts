@@ -10,6 +10,14 @@ export interface User {
   attivo: boolean;
 }
 
+export interface LoginUser {
+  id: number;
+  nome: string;
+  cognome: string;
+  email: string;
+  ruolo: UserRole;
+}
+
 export interface LoginRequest {
   email: string;
   pin: string;

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { LoginRequest, LoginResponse, ApiResponse, User } from '@/types';
+import type { LoginRequest, LoginResponse, ApiResponse, User, LoginUser } from '@/types';
 import { API_BASE_URL, TOKEN_KEY } from '@/utils/constants';
 
 const api = axios.create({
@@ -34,6 +34,11 @@ api.interceptors.response.use(
 );
 
 // Auth API
+export async function getUsersApi(): Promise<ApiResponse<{ users: LoginUser[] }>> {
+  const response = await api.get<ApiResponse<{ users: LoginUser[] }>>('/auth/users');
+  return response.data;
+}
+
 export async function loginApi(data: LoginRequest): Promise<LoginResponse> {
   const response = await api.post<LoginResponse>('/auth/login', data);
   return response.data;
