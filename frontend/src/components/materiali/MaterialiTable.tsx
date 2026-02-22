@@ -73,7 +73,7 @@ export function MaterialiTable({ data, showOrdine = false }: MaterialiTableProps
                         onClick={() => navigate(`/ordini/${m.ordine_id}`)}
                       >
                         <ExternalLink className="h-3 w-3 mr-1" />
-                        #{m.ordine_id}
+                        {m.ordine?.numero_conferma || `#${m.ordine_id}`}
                       </Button>
                     </TableCell>
                   )}
