@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  nome      String   @db.VarChar(100)
+  cognome   String   @db.VarChar(100)
+  email     String?  @unique @db.VarChar(255)
+  pin       String   @db.VarChar(255)
+  ruolo     String   @db.VarChar(50)
+  reparti   Json?
+  attivo    Boolean  @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  fasi_completate     FaseProduzione[] @relation("FaseCompletata")
+  problemi_segnalati  Problema[]       @relation("ProblemaSegnalato")
+  problemi_risolti    Problema[]       @relation("ProblemaRisolto")
+  note                Nota[]
+  log_attivita        LogAttivita[]
+
+  @@map("users")
+}
+
+model Ordine {
+  id                Int      @id @default(autoincrement())
+  numero_conferma   String   @unique @db.VarChar(20)
+  cliente           String   @db.VarChar(255)
+  riferimento       String?  @db.VarChar(255)
+  data_ordine       DateTime @db.Date
+  quantita_porte    Int      @default(1)
+
+  tipo_telaio              String  @db.VarChar(50)
+  colore_telaio_interno    String? @db.VarChar(50)
+  colore_telaio_esterno    String? @db.VarChar(50)
+  verniciatura_necessaria  Boolean @default(false)
+  data_invio_verniciatura  DateTime?
+  data_rientro_verniciatura DateTime?
+
+  urgente        Boolean   @default(false)
+  data_tassativa DateTime? @db.Date
+
+  pdf_path String? @db.Text
+  stato String @default("in_produzione") @db.VarChar(50)
+  note_generali String? @db.Text
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  materiali Materiale[]
+  fasi      FaseProduzione[]
+  problemi  Problema[]
+  note      Nota[]
+  log       LogAttivita[]
+
+  @@map("ordini")
+  @@index([stato])
+  @@index([urgente])
+}
+
+model Materiale {
+  id         Int    @id @default(autoincrement())
+  ordine_id  Int
+  ordine     Ordine @relation(fields: [ordine_id], references: [id], onDelete: Cascade)
+
+  tipo_materiale String @db.VarChar(50)
+  sottotipo String? @db.VarChar(50)
+  necessario Boolean @default(false)
+  note       String? @db.Text
+  misure     String? @db.VarChar(100)
+
+  data_ordine_effettivo   DateTime? @db.Date
+  data_consegna_prevista  DateTime? @db.Date
+  data_arrivo_effettivo   DateTime? @db.Date
+
+  ordine_effettuato Boolean @default(false)
+  arrivato          Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("materiali")
+  @@index([ordine_id])
+}
+
+model FaseProduzione {
+  id         Int    @id @default(autoincrement())
+  ordine_id  Int
+  ordine     Ordine @relation(fields: [ordine_id], references: [id], onDelete: Cascade)
+
+  nome_fase String @db.VarChar(100)
+  stato     String @default("da_fare") @db.VarChar(20)
+
+  completata_da      Int?
+  user               User?     @relation("FaseCompletata", fields: [completata_da], references: [id])
+  data_completamento DateTime?
+
+  note       String? @db.Text
+  foto_paths Json?
+
+  created_at DateTime @default(now())
+
+  @@map("fasi_produzione")
+  @@index([ordine_id])
+  @@index([stato])
+}
+
+model Problema {
+  id         Int    @id @default(autoincrement())
+  ordine_id  Int
+  ordine     Ordine @relation(fields: [ordine_id], references: [id], onDelete: Cascade)
+
+  fase           String? @db.VarChar(100)
+  tipo_problema  String  @db.VarChar(50)
+  descrizione    String  @db.Text
+  gravita        String  @db.VarChar(20)
+
+  segnalato_da         Int
+  user_segnalatore     User     @relation("ProblemaSegnalato", fields: [segnalato_da], references: [id])
+  data_segnalazione    DateTime @default(now())
+  foto_segnalazione_paths Json?
+
+  risolto                   Boolean   @default(false)
+  risolto_da                Int?
+  user_risolutore           User?     @relation("ProblemaRisolto", fields: [risolto_da], references: [id])
+  data_risoluzione          DateTime?
+  descrizione_risoluzione   String?   @db.Text
+  foto_risoluzione_paths    Json?
+
+  created_at DateTime @default(now())
+
+  @@map("problemi")
+  @@index([ordine_id])
+  @@index([risolto])
+}
+
+model Nota {
+  id         Int    @id @default(autoincrement())
+  ordine_id  Int
+  ordine     Ordine @relation(fields: [ordine_id], references: [id], onDelete: Cascade)
+
+  testo      String @db.Text
+  foto_paths Json?
+
+  creato_da  Int
+  user       User     @relation(fields: [creato_da], references: [id])
+  created_at DateTime @default(now())
+
+  @@map("note")
+  @@index([ordine_id])
+}
+
+model LogAttivita {
+  id         Int    @id @default(autoincrement())
+  ordine_id  Int?
+  ordine     Ordine? @relation(fields: [ordine_id], references: [id], onDelete: Cascade)
+
+  user_id Int?
+  user    User? @relation(fields: [user_id], references: [id])
+
+  azione String @db.VarChar(100)
+  dettagli Json?
+
+  created_at DateTime @default(now())
+
+  @@map("log_attivita")
+  @@index([ordine_id])
+  @@index([azione])
+}

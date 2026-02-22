@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma init:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(cd \"/c/Users/Utente/Desktop/controllo stato avanzamento/backend\" && npx prisma migrate dev --name init 2>&1)",
+      "Bash(cd \"/c/Users/Utente/Desktop/controllo stato avanzamento/backend\" && npx prisma db seed 2>&1)",
+      "Bash(cd \"/c/Users/Utente/Desktop/controllo stato avanzamento/backend\" && npx tsc --noEmit 2>&1)",
+      "Bash(true:*)",
+      "Bash(sleep 4:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)"
+    ]
+  }
+}
