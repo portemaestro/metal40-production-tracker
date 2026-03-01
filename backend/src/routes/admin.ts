@@ -15,14 +15,11 @@ const router = Router();
 // All admin routes require ufficio role
 router.use(authenticate, requireRole('ufficio'));
 
-// ── GET /api/admin/users ── Lista tutti gli utenti (escluso se stessi) ──
+// ── GET /api/admin/users ── Lista tutti gli utenti ──
 router.get(
   '/users',
   asyncHandler(async (req: Request, res: Response) => {
     const users = await prisma.user.findMany({
-      where: {
-        id: { not: req.user!.userId },
-      },
       select: {
         id: true,
         nome: true,

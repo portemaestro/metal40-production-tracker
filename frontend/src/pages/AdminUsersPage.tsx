@@ -144,21 +144,23 @@ export function AdminUsersPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            toggleMutation.mutate({ id: u.id, attivo: !u.attivo })
-                          }
-                          disabled={toggleMutation.isPending}
-                          title={u.attivo ? 'Disattiva' : 'Riattiva'}
-                        >
-                          {u.attivo ? (
-                            <UserX className="h-4 w-4 text-destructive" />
-                          ) : (
-                            <UserCheck className="h-4 w-4 text-green-600" />
-                          )}
-                        </Button>
+                        {u.id !== user?.id && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              toggleMutation.mutate({ id: u.id, attivo: !u.attivo })
+                            }
+                            disabled={toggleMutation.isPending}
+                            title={u.attivo ? 'Disattiva' : 'Riattiva'}
+                          >
+                            {u.attivo ? (
+                              <UserX className="h-4 w-4 text-destructive" />
+                            ) : (
+                              <UserCheck className="h-4 w-4 text-green-600" />
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
