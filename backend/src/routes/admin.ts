@@ -49,11 +49,14 @@ router.post(
   validateBody(createUserSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { nome, cognome, email, pin, ruolo, reparti } = req.body;
+    const emailValue = email || null;
 
-    // Check email uniqueness
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      throw new ConflictError('Esiste già un utente con questa email');
+    // Check email uniqueness (only if email provided)
+    if (emailValue) {
+      const existing = await prisma.user.findUnique({ where: { email: emailValue } });
+      if (existing) {
+        throw new ConflictError('Esiste già un utente con questa email');
+      }
     }
 
     const hashedPin = await bcrypt.hash(pin, 10);
@@ -62,7 +65,7 @@ router.post(
       data: {
         nome,
         cognome,
-        email,
+        email: emailValue,
         pin: hashedPin,
         ruolo,
         reparti: ruolo === 'operatore' ? JSON.stringify(reparti) : Prisma.DbNull,
@@ -110,10 +113,11 @@ router.put(
     }
 
     const { nome, cognome, email, pin, ruolo, reparti, attivo } = req.body;
+    const emailValue = email === '' ? null : email;
 
     // Check email uniqueness if changing
-    if (email && email !== existing.email) {
-      const emailTaken = await prisma.user.findUnique({ where: { email } });
+    if (emailValue && emailValue !== existing.email) {
+      const emailTaken = await prisma.user.findUnique({ where: { email: emailValue } });
       if (emailTaken) {
         throw new ConflictError('Esiste già un utente con questa email');
       }
@@ -129,7 +133,7 @@ router.put(
     const data: Record<string, unknown> = {};
     if (nome !== undefined) data.nome = nome;
     if (cognome !== undefined) data.cognome = cognome;
-    if (email !== undefined) data.email = email;
+    if (email !== undefined) data.email = emailValue;
     if (ruolo !== undefined) data.ruolo = ruolo;
     if (attivo !== undefined) data.attivo = attivo;
     if (reparti !== undefined) {

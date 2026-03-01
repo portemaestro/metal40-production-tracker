@@ -26,7 +26,7 @@ import { Loader2 } from 'lucide-react';
 const createSchema = z.object({
   nome: z.string().min(1, 'Nome obbligatorio'),
   cognome: z.string().min(1, 'Cognome obbligatorio'),
-  email: z.string().email('Email non valida'),
+  email: z.string().email('Email non valida').optional().or(z.literal('')),
   pin: z.string().length(4, 'PIN deve essere di 4 cifre').regex(/^\d{4}$/, 'Solo numeri'),
   ruolo: z.enum(['ufficio', 'operatore']),
   reparti: z.array(z.string()),
@@ -38,7 +38,7 @@ const createSchema = z.object({
 const editSchema = z.object({
   nome: z.string().min(1, 'Nome obbligatorio'),
   cognome: z.string().min(1, 'Cognome obbligatorio'),
-  email: z.string().email('Email non valida'),
+  email: z.string().email('Email non valida').optional().or(z.literal('')),
   pin: z.string().regex(/^(\d{4})?$/, 'PIN deve essere di 4 cifre').optional().or(z.literal('')),
   ruolo: z.enum(['ufficio', 'operatore']),
   reparti: z.array(z.string()),
@@ -138,8 +138,8 @@ export function UserForm({ open, onClose, onSubmit, user, isLoading }: UserFormP
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register('email')} />
+            <Label htmlFor="email">Email (opzionale)</Label>
+            <Input id="email" type="email" placeholder="Non obbligatoria" {...register('email')} />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
 
@@ -147,11 +147,11 @@ export function UserForm({ open, onClose, onSubmit, user, isLoading }: UserFormP
             <Label htmlFor="pin">PIN (4 cifre){isEdit && ' - lascia vuoto per non cambiare'}</Label>
             <Input
               id="pin"
-              type="password"
+              type="text"
               maxLength={4}
               inputMode="numeric"
               pattern="\d*"
-              placeholder={isEdit ? '****' : ''}
+              placeholder={isEdit ? '' : ''}
               {...register('pin')}
             />
             {errors.pin && <p className="text-xs text-destructive">{errors.pin.message}</p>}

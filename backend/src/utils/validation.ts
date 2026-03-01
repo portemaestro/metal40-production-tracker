@@ -61,7 +61,7 @@ export const idParamSchema = z.object({
 export const createUserSchema = z.object({
   nome: z.string().min(1, 'Nome obbligatorio').max(50),
   cognome: z.string().min(1, 'Cognome obbligatorio').max(50),
-  email: z.string().email('Email non valida'),
+  email: z.string().email('Email non valida').optional().or(z.literal('')),
   pin: z
     .string()
     .length(4, 'Il PIN deve essere di 4 cifre')
@@ -76,7 +76,7 @@ export const createUserSchema = z.object({
 export const updateUserSchema = z.object({
   nome: z.string().min(1, 'Nome obbligatorio').max(50).optional(),
   cognome: z.string().min(1, 'Cognome obbligatorio').max(50).optional(),
-  email: z.string().email('Email non valida').optional(),
+  email: z.string().email('Email non valida').optional().or(z.literal('')),
   pin: z
     .string()
     .length(4, 'Il PIN deve essere di 4 cifre')
