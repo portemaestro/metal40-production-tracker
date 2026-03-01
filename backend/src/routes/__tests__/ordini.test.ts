@@ -163,13 +163,13 @@ describe('DELETE /api/ordini/:id', () => {
     expect(res.body.success).toBe(true);
   });
 
-  it('non elimina ordine spedito', async () => {
+  it('elimina anche ordine spedito', async () => {
     mockPrismaClient.ordine.findUnique.mockResolvedValue({ ...mockOrdine, stato: 'spedito' });
 
     const res = await request(app)
       .delete('/api/ordini/1')
       .set('Authorization', `Bearer ${ufficioToken}`);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
   });
 });

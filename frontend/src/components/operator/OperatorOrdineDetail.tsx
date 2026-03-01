@@ -8,7 +8,8 @@ import { CompletePhaseDialog } from './CompletePhaseDialog';
 import { ReportProblemDialog } from './ReportProblemDialog';
 import { AddNoteDialog } from './AddNoteDialog';
 import { MaterialReceiptDialog } from './MaterialReceiptDialog';
-import { TIPI_TELAIO_LABELS, TIPI_MATERIALE_LABELS } from '@/utils/constants';
+import { TIPI_TELAIO_LABELS, TIPI_MATERIALE_LABELS, TIPI_CONSEGNA_FT_LABELS } from '@/utils/constants';
+import { useMarkFtPreparato } from '@/hooks/useOrdini';
 import {
   Zap,
   Calendar,
@@ -20,6 +21,7 @@ import {
   User,
   Clock,
   ExternalLink,
+  Truck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Ordine, FaseProduzione } from '@/types';
@@ -34,6 +36,7 @@ export function OperatorOrdineDetail({ ordine, fasiOperatore }: OperatorOrdineDe
   const [reportProblemOpen, setReportProblemOpen] = useState(false);
   const [addNoteOpen, setAddNoteOpen] = useState(false);
   const [materialReceiptOpen, setMaterialReceiptOpen] = useState(false);
+  const ftPreparatoMutation = useMarkFtPreparato();
 
   // Find phases that the operator can complete (da_fare)
   const fasiDaFare = fasiOperatore.filter((f) => f.stato === 'da_fare');
@@ -108,6 +111,68 @@ export function OperatorOrdineDetail({ ordine, fasiOperatore }: OperatorOrdineDe
           )}
         </CardContent>
       </Card>
+
+      {/* Banner consegna anticipata falsotelaio */}
+      {ordine.consegna_anticipata_ft && (
+        <Card className={`border ${
+          ordine.ft_consegnato
+            ? 'border-green-300 bg-green-50'
+            : ordine.ft_preparato
+            ? 'border-green-200 bg-green-50'
+            : 'border-purple-200 bg-purple-50'
+        }`}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              {ordine.ft_consegnato ? (
+                <Truck className="h-5 w-5 text-green-700" />
+              ) : ordine.ft_preparato ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              ) : (
+                <Package className="h-5 w-5 text-purple-600" />
+              )}
+              <span className={`font-medium ${
+                ordine.ft_consegnato
+                  ? 'text-green-800'
+                  : ordine.ft_preparato
+                  ? 'text-green-700'
+                  : 'text-purple-700'
+              }`}>
+                {ordine.ft_consegnato
+                  ? `Falsotelaio consegnato il ${new Date(ordine.data_consegna_effettiva_ft!).toLocaleDateString('it-IT')}`
+                  : ordine.ft_preparato
+                  ? `Falsotelaio preparato - In attesa di consegna`
+                  : 'Consegna anticipata falsotelaio richiesta'}
+              </span>
+            </div>
+            <p className={`text-xs mb-3 ${ordine.ft_consegnato || ordine.ft_preparato ? 'text-green-600' : 'text-purple-600'}`}>
+              {ordine.tipo_consegna_ft && (TIPI_CONSEGNA_FT_LABELS[ordine.tipo_consegna_ft] || ordine.tipo_consegna_ft)}
+              {ordine.data_consegna_ft && !ordine.ft_consegnato &&
+                ` - Consegna prevista: ${new Date(ordine.data_consegna_ft).toLocaleDateString('it-IT')}`}
+            </p>
+            {!ordine.ft_preparato && !ordine.ft_consegnato && (
+              <Button
+                size="lg"
+                className="w-full bg-purple-600 hover:bg-purple-700 h-14 text-base"
+                disabled={ftPreparatoMutation.isPending}
+                onClick={() => {
+                  if (confirm('Confermi che il falsotelaio è stato preparato?')) {
+                    ftPreparatoMutation.mutate(ordine.id);
+                  }
+                }}
+              >
+                <CheckCircle2 className="mr-2 h-5 w-5" />
+                {ftPreparatoMutation.isPending ? 'Salvataggio...' : 'Falsotelaio Preparato'}
+              </Button>
+            )}
+            {ordine.ft_preparato && ordine.data_preparazione_ft && (
+              <p className="text-xs text-green-600">
+                Preparato il {new Date(ordine.data_preparazione_ft).toLocaleDateString('it-IT')}
+                {ordine.user_ft_preparato && ` da ${ordine.user_ft_preparato.nome} ${ordine.user_ft_preparato.cognome}`}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Action buttons */}
       <div className="grid grid-cols-2 gap-2">

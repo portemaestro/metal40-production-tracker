@@ -107,6 +107,10 @@ router.get(
             stato: true,
             tipo_telaio: true,
             pdf_path: true,
+            consegna_anticipata_ft: true,
+            ft_preparato: true,
+            tipo_consegna_ft: true,
+            data_consegna_ft: true,
           },
         },
         user: {

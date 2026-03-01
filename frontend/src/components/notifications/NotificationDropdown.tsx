@@ -9,6 +9,7 @@ import {
   CheckCheck,
   Wifi,
   WifiOff,
+  Truck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +30,8 @@ const EVENT_CONFIG: Record<SocketEventType, { icon: typeof Bell; color: string }
   materiale_arrivato: { icon: Package, color: 'text-blue-600' },
   fase_completata: { icon: CheckCircle2, color: 'text-green-600' },
   problema_risolto: { icon: ShieldCheck, color: 'text-emerald-600' },
+  ft_preparato: { icon: Package, color: 'text-purple-600' },
+  ft_consegnato: { icon: Truck, color: 'text-green-700' },
 };
 
 function NotificationItem({

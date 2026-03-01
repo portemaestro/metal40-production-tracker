@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { Zap, Calendar, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
+import { Zap, Calendar, ArrowRight, CheckCircle2, Clock, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { FaseProduzione } from '@/types';
 
@@ -30,6 +30,7 @@ export function OperatorPhaseCard({ fase }: OperatorPhaseCardProps) {
 
   const isScaduto = giorniRimanenti !== null && giorniRimanenti < 0;
   const isUrgenzaTempo = giorniRimanenti !== null && giorniRimanenti <= 3 && giorniRimanenti >= 0;
+  const showFtBadge = ordine.consegna_anticipata_ft && !ordine.ft_preparato;
 
   return (
     <Card
@@ -38,6 +39,7 @@ export function OperatorPhaseCard({ fase }: OperatorPhaseCardProps) {
         ordine.urgente && 'border-orange-300 bg-orange-50/50',
         ordine.stato === 'bloccato' && 'border-red-300 bg-red-50/50',
         isScaduto && !ordine.urgente && 'border-red-200',
+        showFtBadge && !ordine.urgente && !isScaduto && 'border-purple-300 bg-purple-50/50',
       )}
       onClick={() => navigate(`/ordine/${ordine.id}`)}
     >
@@ -49,6 +51,11 @@ export function OperatorPhaseCard({ fase }: OperatorPhaseCardProps) {
             {ordine.urgente && (
               <Badge className="bg-orange-500 text-white hover:bg-orange-500">
                 <Zap className="mr-1 h-3 w-3" /> Urgente
+              </Badge>
+            )}
+            {showFtBadge && (
+              <Badge className="bg-purple-500 text-white hover:bg-purple-500">
+                <Package className="mr-1 h-3 w-3" /> FT Anticipato
               </Badge>
             )}
             <StatusBadge type="ordine" value={ordine.stato} />

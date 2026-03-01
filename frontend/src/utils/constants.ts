@@ -72,4 +72,9 @@ export const TIPI_MATERIALE_LABELS: Record<string, string> = {
   altro: 'Altro',
 };
 
+export const TIPI_CONSEGNA_FT_LABELS: Record<string, string> = {
+  assemblato: 'Assemblato (consegna/ritiro)',
+  kit_montaggio: 'Kit Montaggio (spedizione)',
+};
+
 export const TOKEN_KEY = 'metal40_token';

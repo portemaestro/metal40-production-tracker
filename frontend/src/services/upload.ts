@@ -16,6 +16,9 @@ export interface ExtractedOrderData {
   vetro: string;
   maniglione: string;
   note: string;
+  consegna_anticipata_ft: boolean;
+  tipo_consegna_ft: string;
+  data_consegna_ft: string;
 }
 
 export interface PdfUploadResponse {

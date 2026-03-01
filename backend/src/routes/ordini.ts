@@ -31,6 +31,13 @@ const createOrdineSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato data: YYYY-MM-DD')
       .optional()
       .nullable(),
+    consegna_anticipata_ft: z.boolean().default(false),
+    data_consegna_ft: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato data: YYYY-MM-DD')
+      .optional()
+      .nullable(),
+    tipo_consegna_ft: z.enum(['assemblato', 'kit_montaggio']).optional().nullable(),
     pdf_path: z.string().optional().nullable(),
     note_generali: z.string().optional().nullable(),
     materiali_pdf: z.array(z.object({
@@ -59,6 +66,13 @@ const updateOrdineSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato data: YYYY-MM-DD')
     .optional()
     .nullable(),
+  consegna_anticipata_ft: z.boolean().optional(),
+  data_consegna_ft: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato data: YYYY-MM-DD')
+    .optional()
+    .nullable(),
+  tipo_consegna_ft: z.enum(['assemblato', 'kit_montaggio']).optional().nullable(),
   note_generali: z.string().optional().nullable(),
   stato: z.enum(ORDINE_STATI).optional(),
 });
@@ -184,6 +198,12 @@ router.get(
     const ordine = await prisma.ordine.findUnique({
       where: { id },
       include: {
+        user_ft_preparato: {
+          select: { id: true, nome: true, cognome: true },
+        },
+        user_ft_consegnato: {
+          select: { id: true, nome: true, cognome: true },
+        },
         materiali: {
           orderBy: { id: 'asc' },
         },
@@ -266,6 +286,9 @@ router.post(
           data_tassativa: data.data_tassativa ? new Date(data.data_tassativa) : null,
           pdf_path: data.pdf_path ?? null,
           note_generali: data.note_generali ?? null,
+          consegna_anticipata_ft: data.consegna_anticipata_ft ?? false,
+          data_consegna_ft: data.data_consegna_ft ? new Date(data.data_consegna_ft) : null,
+          tipo_consegna_ft: data.consegna_anticipata_ft ? (data.tipo_consegna_ft ?? null) : null,
         },
       });
 
@@ -404,6 +427,23 @@ router.put(
       updateData.data_tassativa = data.data_tassativa ? new Date(data.data_tassativa) : null;
     if (data.note_generali !== undefined) updateData.note_generali = data.note_generali;
     if (data.stato !== undefined) updateData.stato = data.stato;
+    if (data.consegna_anticipata_ft !== undefined) {
+      updateData.consegna_anticipata_ft = data.consegna_anticipata_ft;
+      if (!data.consegna_anticipata_ft) {
+        // Reset all FT fields when disabling
+        updateData.data_consegna_ft = null;
+        updateData.tipo_consegna_ft = null;
+        updateData.ft_preparato = false;
+        updateData.ft_preparato_da = null;
+        updateData.data_preparazione_ft = null;
+        updateData.ft_consegnato = false;
+        updateData.ft_consegnato_da = null;
+        updateData.data_consegna_effettiva_ft = null;
+      }
+    }
+    if (data.data_consegna_ft !== undefined)
+      updateData.data_consegna_ft = data.data_consegna_ft ? new Date(data.data_consegna_ft) : null;
+    if (data.tipo_consegna_ft !== undefined) updateData.tipo_consegna_ft = data.tipo_consegna_ft;
 
     const ordine = await prisma.$transaction(async (tx) => {
       // Se tipo_telaio cambia, rigenera le fasi
@@ -495,6 +535,153 @@ router.delete(
     });
 
     return success(res, null, 200, 'Ordine eliminato con successo');
+  }),
+);
+
+// ── POST /api/ordini/:id/ft-preparato ──
+// Operatore segna il falsotelaio come preparato
+router.post(
+  '/:id/ft-preparato',
+  authenticate,
+  requireRole('operatore'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id) || id <= 0) throw new ValidationError('ID non valido');
+
+    const ordine = await prisma.ordine.findUnique({ where: { id } });
+    if (!ordine) throw new NotFoundError('Ordine non trovato');
+    if (!ordine.consegna_anticipata_ft) {
+      throw new ValidationError('Questo ordine non ha consegna anticipata falsotelaio');
+    }
+    if (ordine.ft_preparato) {
+      throw new ValidationError('Falsotelaio già segnato come preparato');
+    }
+
+    const utente = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { nome: true, cognome: true },
+    });
+
+    const adesso = new Date();
+
+    const aggiornato = await prisma.$transaction(async (tx) => {
+      const result = await tx.ordine.update({
+        where: { id },
+        data: {
+          ft_preparato: true,
+          ft_preparato_da: req.user!.userId,
+          data_preparazione_ft: adesso,
+        },
+      });
+
+      await tx.logAttivita.create({
+        data: {
+          user_id: req.user!.userId,
+          ordine_id: id,
+          azione: 'ft_preparato',
+          dettagli: {
+            numero_conferma: ordine.numero_conferma,
+            cliente: ordine.cliente,
+          },
+        },
+      });
+
+      return result;
+    });
+
+    // WebSocket: notifica ufficio
+    const io = req.app.get('io');
+    if (io) {
+      io.to('ufficio').emit('ft_preparato', {
+        ordine_id: id,
+        numero_conferma: ordine.numero_conferma,
+        cliente: ordine.cliente,
+        preparato_da: utente ? `${utente.nome} ${utente.cognome}` : 'Sconosciuto',
+        data_preparazione: adesso.toISOString(),
+      });
+    }
+
+    logger.info('Falsotelaio preparato', {
+      ordineId: id,
+      userId: req.user!.userId,
+    });
+
+    return success(res, aggiornato, 200, 'Falsotelaio segnato come preparato');
+  }),
+);
+
+// ── POST /api/ordini/:id/ft-consegnato ──
+// Ufficio segna il falsotelaio come consegnato/spedito
+router.post(
+  '/:id/ft-consegnato',
+  authenticate,
+  requireRole('ufficio'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id) || id <= 0) throw new ValidationError('ID non valido');
+
+    const ordine = await prisma.ordine.findUnique({ where: { id } });
+    if (!ordine) throw new NotFoundError('Ordine non trovato');
+    if (!ordine.consegna_anticipata_ft) {
+      throw new ValidationError('Questo ordine non ha consegna anticipata falsotelaio');
+    }
+    if (!ordine.ft_preparato) {
+      throw new ValidationError('Il falsotelaio non è ancora stato preparato');
+    }
+    if (ordine.ft_consegnato) {
+      throw new ValidationError('Falsotelaio già consegnato/spedito');
+    }
+
+    const utente = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { nome: true, cognome: true },
+    });
+
+    const adesso = new Date();
+
+    const aggiornato = await prisma.$transaction(async (tx) => {
+      const result = await tx.ordine.update({
+        where: { id },
+        data: {
+          ft_consegnato: true,
+          ft_consegnato_da: req.user!.userId,
+          data_consegna_effettiva_ft: adesso,
+        },
+      });
+
+      await tx.logAttivita.create({
+        data: {
+          user_id: req.user!.userId,
+          ordine_id: id,
+          azione: 'ft_consegnato',
+          dettagli: {
+            numero_conferma: ordine.numero_conferma,
+            cliente: ordine.cliente,
+          },
+        },
+      });
+
+      return result;
+    });
+
+    // WebSocket: notifica informativa
+    const io = req.app.get('io');
+    if (io) {
+      io.to('ufficio').emit('ft_consegnato', {
+        ordine_id: id,
+        numero_conferma: ordine.numero_conferma,
+        cliente: ordine.cliente,
+        consegnato_da: utente ? `${utente.nome} ${utente.cognome}` : 'Sconosciuto',
+        data_consegna: adesso.toISOString(),
+      });
+    }
+
+    logger.info('Falsotelaio consegnato', {
+      ordineId: id,
+      userId: req.user!.userId,
+    });
+
+    return success(res, aggiornato, 200, 'Falsotelaio segnato come consegnato/spedito');
   }),
 );
 

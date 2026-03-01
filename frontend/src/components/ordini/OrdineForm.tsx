@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TIPI_TELAIO_LABELS } from '@/utils/constants';
+import { TIPI_TELAIO_LABELS, TIPI_CONSEGNA_FT_LABELS } from '@/utils/constants';
 import { FileText, Package } from 'lucide-react';
 import type { Ordine } from '@/types';
 import type { MaterialePdf } from '@/services/ordini';
@@ -41,6 +41,9 @@ const ordineFormSchema = z
     verniciatura_necessaria: z.boolean().optional(),
     urgente: z.boolean(),
     data_tassativa: z.string().optional(),
+    consegna_anticipata_ft: z.boolean().optional(),
+    data_consegna_ft: z.string().optional(),
+    tipo_consegna_ft: z.string().optional(),
     note_generali: z.string().optional(),
   })
   .refine((data) => !data.urgente || data.data_tassativa, {
@@ -82,17 +85,22 @@ export function OrdineForm({ defaultValues, ordine, pdfPath, materialiPdf, onSub
       verniciatura_necessaria: ordine?.verniciatura_necessaria || false,
       urgente: ordine?.urgente || false,
       data_tassativa: ordine?.data_tassativa ? ordine.data_tassativa.split('T')[0] : '',
+      consegna_anticipata_ft: ordine?.consegna_anticipata_ft || false,
+      data_consegna_ft: ordine?.data_consegna_ft ? ordine.data_consegna_ft.split('T')[0] : '',
+      tipo_consegna_ft: ordine?.tipo_consegna_ft || '',
       note_generali: ordine?.note_generali || '',
       ...defaultValues,
     },
   });
 
   const urgente = watch('urgente');
+  const tipoTelaio = watch('tipo_telaio');
+  const consegnaAnticipatFt = watch('consegna_anticipata_ft');
 
   function handleFormSubmit(data: OrdineFormValues) {
     // Clean empty strings to undefined for optional fields
     const cleaned = { ...data } as Record<string, unknown>;
-    const optionalStringFields = ['riferimento', 'data_tassativa', 'note_generali', 'colore_telaio_interno', 'colore_telaio_esterno'];
+    const optionalStringFields = ['riferimento', 'data_tassativa', 'note_generali', 'colore_telaio_interno', 'colore_telaio_esterno', 'data_consegna_ft', 'tipo_consegna_ft'];
     for (const field of optionalStringFields) {
       if (cleaned[field] === '') {
         delete cleaned[field];
@@ -247,6 +255,53 @@ export function OrdineForm({ defaultValues, ordine, pdfPath, materialiPdf, onSub
               <Input id="data_tassativa" type="date" {...register('data_tassativa')} />
               {errors.data_tassativa && (
                 <p className="text-sm text-destructive">{errors.data_tassativa.message}</p>
+              )}
+            </div>
+          )}
+
+          {/* Consegna anticipata falsotelaio (solo per standard_falsotelaio) */}
+          {tipoTelaio === 'standard_falsotelaio' && (
+            <div className="space-y-3 p-4 rounded-lg bg-purple-50 border border-purple-200">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="consegna_anticipata_ft"
+                  {...register('consegna_anticipata_ft')}
+                  className="h-4 w-4 rounded border-purple-300 text-purple-600"
+                />
+                <Label htmlFor="consegna_anticipata_ft" className="text-purple-700 font-medium">
+                  Consegna anticipata falsotelaio
+                </Label>
+              </div>
+
+              {consegnaAnticipatFt && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="data_consegna_ft" className="text-purple-700">Data consegna FT</Label>
+                    <Input
+                      id="data_consegna_ft"
+                      type="date"
+                      {...register('data_consegna_ft')}
+                      className="border-purple-200"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-purple-700">Tipo consegna</Label>
+                    <Select
+                      value={watch('tipo_consegna_ft') || ''}
+                      onValueChange={(v) => setValue('tipo_consegna_ft', v)}
+                    >
+                      <SelectTrigger className="border-purple-200">
+                        <SelectValue placeholder="Seleziona tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(TIPI_CONSEGNA_FT_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               )}
             </div>
           )}

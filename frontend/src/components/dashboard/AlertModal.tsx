@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { AlertTriangle, Package, Truck } from 'lucide-react';
+import { TIPI_CONSEGNA_FT_LABELS } from '@/utils/constants';
 import type { DashboardAlert } from '@/types';
 
 const ALERT_DISMISSED_KEY = 'metal40_alert_dismissed_date';
@@ -44,6 +45,7 @@ export function AlertModal({ alert }: AlertModalProps) {
   const matCount = alert.materiali_da_ordinare.length;
   const probCount = alert.problemi_aperti.length;
   const arrCount = alert.materiali_in_arrivo.length;
+  const ftCount = alert.ft_in_attesa?.length ?? 0;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
@@ -55,7 +57,7 @@ export function AlertModal({ alert }: AlertModalProps) {
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue={matCount > 0 ? 'materiali' : probCount > 0 ? 'problemi' : 'arrivi'}>
+        <Tabs defaultValue={matCount > 0 ? 'materiali' : probCount > 0 ? 'problemi' : ftCount > 0 ? 'falsotelaio' : 'arrivi'}>
           <TabsList className="w-full">
             {matCount > 0 && (
               <TabsTrigger value="materiali" className="flex-1">
@@ -69,6 +71,13 @@ export function AlertModal({ alert }: AlertModalProps) {
                 <AlertTriangle className="h-4 w-4 mr-1" />
                 Problemi
                 <Badge variant="secondary" className="ml-1">{probCount}</Badge>
+              </TabsTrigger>
+            )}
+            {ftCount > 0 && (
+              <TabsTrigger value="falsotelaio" className="flex-1">
+                <Package className="h-4 w-4 mr-1" />
+                Falsotelaio
+                <Badge variant="secondary" className="ml-1">{ftCount}</Badge>
               </TabsTrigger>
             )}
             {arrCount > 0 && (
@@ -132,6 +141,62 @@ export function AlertModal({ alert }: AlertModalProps) {
                       <p className="text-xs text-muted-foreground mt-1">
                         Segnalato da {p.segnalato_da_nome} - {p.cliente}
                       </p>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          )}
+
+          {ftCount > 0 && (
+            <TabsContent value="falsotelaio">
+              <ScrollArea className="h-[400px]">
+                <div className="space-y-3">
+                  {alert.ft_in_attesa.map((ft) => (
+                    <div key={ft.ordine_id} className="rounded-lg border border-purple-200 bg-purple-50/50 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <span className="font-medium">{ft.numero_conferma}</span>
+                          <span className="text-sm text-muted-foreground ml-2">{ft.cliente}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { handleClose(); navigate(`/ordini/${ft.ordine_id}`); }}
+                        >
+                          Vedi
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm">
+                        <Badge
+                          variant="secondary"
+                          className={ft.ft_preparato
+                            ? 'bg-green-200 text-green-800'
+                            : 'bg-purple-200 text-purple-800'
+                          }
+                        >
+                          {ft.ft_preparato ? 'Preparato' : 'Da preparare'}
+                        </Badge>
+                        {ft.tipo_consegna_ft && (
+                          <span className="text-muted-foreground text-xs">
+                            {TIPI_CONSEGNA_FT_LABELS[ft.tipo_consegna_ft] || ft.tipo_consegna_ft}
+                          </span>
+                        )}
+                        {ft.giorni_mancanti !== null && (
+                          <span className={`text-xs font-medium ${
+                            ft.giorni_mancanti <= 0 ? 'text-red-600' : ft.giorni_mancanti <= 3 ? 'text-orange-600' : ''
+                          }`}>
+                            {ft.giorni_mancanti <= 0
+                              ? 'Scaduto'
+                              : `Tra ${ft.giorni_mancanti} gg`}
+                          </span>
+                        )}
+                      </div>
+                      {ft.ft_preparato && ft.preparato_da && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Preparato da {ft.preparato_da}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>

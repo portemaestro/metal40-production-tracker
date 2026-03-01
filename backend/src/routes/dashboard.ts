@@ -58,6 +58,7 @@ router.get(
       ordiniInRitardo,
       tempoMedioRisoluzione,
       tempoMedioProduzione,
+      ftInAttesa,
     ] = await Promise.all([
       // Conteggio ordini per stato
       prisma.ordine.groupBy({
@@ -144,6 +145,15 @@ router.get(
           updated_at: true,
         },
       }),
+
+      // Falsetelaio anticipati in attesa (non ancora consegnati)
+      prisma.ordine.count({
+        where: {
+          consegna_anticipata_ft: true,
+          ft_consegnato: false,
+          stato: { in: ['in_produzione', 'bloccato'] },
+        },
+      }),
     ]);
 
     // Calcola conteggi per stato
@@ -202,6 +212,7 @@ router.get(
         urgenti,
         problemi_aperti: problemiAperti,
         pronte_spedizione: statiMap.pronto_spedizione,
+        ft_in_attesa: ftInAttesa,
       },
       dettagli: {
         ordini_stato: statiMap,
@@ -242,7 +253,7 @@ router.get(
     domani.setDate(domani.getDate() + 2); // Fine di domani (inizio dopodomani)
 
     // Esegui tutte le query in parallelo
-    const [materialiDaOrdinareRaw, problemiApertiRaw, materialiInArrivoRaw] = await Promise.all([
+    const [materialiDaOrdinareRaw, problemiApertiRaw, materialiInArrivoRaw, ftInAttesaRaw] = await Promise.all([
       // Materiali da ordinare (necessari, non ordinati, ordini attivi)
       prisma.materiale.findMany({
         where: {
@@ -303,6 +314,21 @@ router.get(
           },
         },
         orderBy: { data_consegna_prevista: 'asc' },
+      }),
+
+      // Falsotelaio anticipati in attesa
+      prisma.ordine.findMany({
+        where: {
+          consegna_anticipata_ft: true,
+          ft_consegnato: false,
+          stato: { in: ['in_produzione', 'bloccato'] },
+        },
+        include: {
+          user_ft_preparato: {
+            select: { nome: true, cognome: true },
+          },
+        },
+        orderBy: { data_consegna_ft: 'asc' },
       }),
     ]);
 
@@ -387,15 +413,44 @@ router.get(
       };
     });
 
+    // Formatta FT in attesa
+    const oggiDateFt = new Date();
+    oggiDateFt.setHours(0, 0, 0, 0);
+    const ftInAttesa = ftInAttesaRaw.map((o) => {
+      const dataConsegna = o.data_consegna_ft ? new Date(o.data_consegna_ft) : null;
+      let giorniMancanti: number | null = null;
+      if (dataConsegna) {
+        dataConsegna.setHours(0, 0, 0, 0);
+        giorniMancanti = Math.ceil(
+          (dataConsegna.getTime() - oggiDateFt.getTime()) / (1000 * 60 * 60 * 24),
+        );
+      }
+      return {
+        ordine_id: o.id,
+        numero_conferma: o.numero_conferma,
+        cliente: o.cliente,
+        tipo_consegna_ft: o.tipo_consegna_ft,
+        data_consegna_ft: o.data_consegna_ft ? o.data_consegna_ft.toISOString().split('T')[0] : null,
+        giorni_mancanti: giorniMancanti,
+        ft_preparato: o.ft_preparato,
+        preparato_da: o.user_ft_preparato
+          ? `${o.user_ft_preparato.nome} ${o.user_ft_preparato.cognome}`
+          : null,
+        data_preparazione_ft: o.data_preparazione_ft?.toISOString() ?? null,
+      };
+    });
+
     const ha_alert =
       materialiDaOrdinare.length > 0 ||
       problemiAperti.length > 0 ||
-      materialiInArrivo.length > 0;
+      materialiInArrivo.length > 0 ||
+      ftInAttesa.length > 0;
 
     const data = {
       materiali_da_ordinare: materialiDaOrdinare,
       problemi_aperti: problemiAperti,
       materiali_in_arrivo: materialiInArrivo,
+      ft_in_attesa: ftInAttesa,
       ha_alert,
       timestamp: new Date().toISOString(),
     };
@@ -406,6 +461,7 @@ router.get(
       materiali_da_ordinare: materialiDaOrdinare.length,
       problemi_aperti: problemiAperti.length,
       materiali_in_arrivo: materialiInArrivo.length,
+      ft_in_attesa: ftInAttesa.length,
     });
 
     return success(res, data);

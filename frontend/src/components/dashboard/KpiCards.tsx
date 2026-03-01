@@ -1,4 +1,4 @@
-import { Factory, AlertTriangle, PackageCheck, Zap } from 'lucide-react';
+import { Factory, AlertTriangle, PackageCheck, Zap, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CardSkeleton } from '@/components/common/LoadingState';
 import type { DashboardStats } from '@/types';
@@ -37,13 +37,20 @@ const KPI_CONFIG = [
     color: 'text-green-600',
     bg: 'bg-green-50',
   },
+  {
+    key: 'ft_in_attesa' as const,
+    label: 'FT In Attesa',
+    icon: Package,
+    color: 'text-purple-600',
+    bg: 'bg-purple-50',
+  },
 ];
 
 export function KpiCards({ stats, loading }: KpiCardsProps) {
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
           <CardSkeleton key={i} />
         ))}
       </div>
@@ -51,7 +58,7 @@ export function KpiCards({ stats, loading }: KpiCardsProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       {KPI_CONFIG.map((kpi) => (
         <Card key={kpi.key}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

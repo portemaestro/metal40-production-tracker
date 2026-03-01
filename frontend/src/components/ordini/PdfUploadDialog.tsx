@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { uploadPdf, type PdfUploadResponse } from '@/services/upload';
 import type { MaterialePdf } from '@/services/ordini';
-import { TIPI_TELAIO_LABELS } from '@/utils/constants';
+import { TIPI_TELAIO_LABELS, TIPI_CONSEGNA_FT_LABELS } from '@/utils/constants';
 import { FileUp, Loader2, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
 
 interface PdfUploadDialogProps {
@@ -150,6 +150,9 @@ export function PdfUploadDialog({ open, onOpenChange }: PdfUploadDialogProps) {
       colore_telaio_interno: coloreInt,
       verniciatura_necessaria: extracted ? isVerniciaturaNecessaria(coloreEst, coloreInt) : false,
       note_generali: extracted?.note || '',
+      consegna_anticipata_ft: extracted?.consegna_anticipata_ft || false,
+      tipo_consegna_ft: extracted?.tipo_consegna_ft || '',
+      data_consegna_ft: extracted?.data_consegna_ft || '',
     };
 
     onOpenChange(false);
@@ -263,6 +266,25 @@ export function PdfUploadDialog({ open, onOpenChange }: PdfUploadDialogProps) {
                 <DataRow label="Vetro" value={result.extracted_data.vetro} />
                 <DataRow label="Maniglione" value={result.extracted_data.maniglione} />
                 <DataRow label="Note" value={result.extracted_data.note} />
+                {result.extracted_data.consegna_anticipata_ft && (
+                  <>
+                    <div className="flex items-center justify-between px-3 py-2 bg-purple-50">
+                      <span className="text-muted-foreground">Consegna Anticipata FT</span>
+                      <Badge variant="outline" className="text-purple-700 border-purple-300">
+                        Si
+                      </Badge>
+                    </div>
+                    {result.extracted_data.tipo_consegna_ft && (
+                      <DataRow
+                        label="Tipo Consegna FT"
+                        value={TIPI_CONSEGNA_FT_LABELS[result.extracted_data.tipo_consegna_ft] || result.extracted_data.tipo_consegna_ft}
+                      />
+                    )}
+                    {result.extracted_data.data_consegna_ft && (
+                      <DataRow label="Data Consegna FT" value={result.extracted_data.data_consegna_ft} />
+                    )}
+                  </>
+                )}
                 {isVerniciaturaNecessaria(
                   result.extracted_data.colore_telaio_esterno,
                   result.extracted_data.colore_telaio_interno,

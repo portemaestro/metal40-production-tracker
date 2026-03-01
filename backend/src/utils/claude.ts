@@ -24,8 +24,11 @@ Campi da estrarre:
 - vetro: string (descrizione vetro con misure, o "" se assente)
 - maniglione: string (descrizione maniglione, o "" se assente)
 - note: string (note aggiuntive trovate, o "")
+- consegna_anticipata_ft: boolean (true se nel documento si menziona consegna anticipata del falsotelaio/controtelaio, consegna anticipata FT, spedizione anticipata falsotelaio, o simili)
+- tipo_consegna_ft: string (se consegna anticipata: "assemblato" se consegna diretta/ritiro/assemblato, "kit_montaggio" se kit montaggio/spedizione, o "" se non specificato)
+- data_consegna_ft: string (data consegna anticipata falsotelaio in formato YYYY-MM-DD se presente, o "")
 
-Se un campo non è presente o leggibile, usa stringa vuota "".
+Se un campo non è presente o leggibile, usa stringa vuota "" (o false per booleani).
 Rispondi SOLO JSON valido.`;
 
 export interface ExtractedOrderData {
@@ -43,6 +46,9 @@ export interface ExtractedOrderData {
   vetro: string;
   maniglione: string;
   note: string;
+  consegna_anticipata_ft: boolean;
+  tipo_consegna_ft: string;
+  data_consegna_ft: string;
 }
 
 /**

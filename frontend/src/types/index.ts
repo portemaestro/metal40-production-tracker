@@ -81,6 +81,18 @@ export interface Ordine {
   pdf_path: string | null;
   stato: StatoOrdine;
   note_generali: string | null;
+  // Consegna anticipata falsotelaio
+  consegna_anticipata_ft: boolean;
+  data_consegna_ft: string | null;
+  tipo_consegna_ft: string | null;
+  ft_preparato: boolean;
+  ft_preparato_da: number | null;
+  user_ft_preparato?: Pick<User, 'id' | 'nome' | 'cognome'> | null;
+  data_preparazione_ft: string | null;
+  ft_consegnato: boolean;
+  ft_consegnato_da: number | null;
+  user_ft_consegnato?: Pick<User, 'id' | 'nome' | 'cognome'> | null;
+  data_consegna_effettiva_ft: string | null;
   created_at: string;
   updated_at: string;
   materiali?: Materiale[];
@@ -164,6 +176,7 @@ export interface DashboardStats {
     urgenti: number;
     problemi_aperti: number;
     pronte_spedizione: number;
+    ft_in_attesa: number;
   };
   dettagli: {
     ordini_stato: Record<string, number>;
@@ -223,10 +236,23 @@ export interface AlertMaterialeArrivo {
   arrivato: boolean;
 }
 
+export interface AlertFtInAttesa {
+  ordine_id: number;
+  numero_conferma: string;
+  cliente: string;
+  tipo_consegna_ft: string | null;
+  data_consegna_ft: string | null;
+  giorni_mancanti: number | null;
+  ft_preparato: boolean;
+  preparato_da: string | null;
+  data_preparazione_ft: string | null;
+}
+
 export interface DashboardAlert {
   materiali_da_ordinare: AlertMaterialiOrdine[];
   problemi_aperti: AlertProblema[];
   materiali_in_arrivo: AlertMaterialeArrivo[];
+  ft_in_attesa: AlertFtInAttesa[];
   ha_alert: boolean;
   timestamp: string;
 }
@@ -280,7 +306,23 @@ export interface SocketProblemaRisolto {
   foto_risoluzione_paths: string[] | null;
 }
 
-export type SocketEventType = 'problema_segnalato' | 'materiale_arrivato' | 'fase_completata' | 'problema_risolto';
+export interface SocketFtPreparato {
+  ordine_id: number;
+  numero_conferma: string;
+  cliente: string;
+  preparato_da: string;
+  data_preparazione: string;
+}
+
+export interface SocketFtConsegnato {
+  ordine_id: number;
+  numero_conferma: string;
+  cliente: string;
+  consegnato_da: string;
+  data_consegna: string;
+}
+
+export type SocketEventType = 'problema_segnalato' | 'materiale_arrivato' | 'fase_completata' | 'problema_risolto' | 'ft_preparato' | 'ft_consegnato';
 
 export interface AppNotification {
   id: string;

@@ -25,6 +25,8 @@ model User {
   problemi_risolti    Problema[]       @relation("ProblemaRisolto")
   note                Nota[]
   log_attivita        LogAttivita[]
+  ft_preparati        Ordine[]         @relation("FtPreparatoDa")
+  ft_consegnati       Ordine[]         @relation("FtConSegnatoDa")
 
   @@map("users")
 }
@@ -51,6 +53,19 @@ model Ordine {
   stato String @default("in_produzione") @db.VarChar(50)
   note_generali String? @db.Text
 
+  // Consegna anticipata falsotelaio
+  consegna_anticipata_ft        Boolean   @default(false)
+  data_consegna_ft              DateTime? @db.Date
+  tipo_consegna_ft              String?   @db.VarChar(20)
+  ft_preparato                  Boolean   @default(false)
+  ft_preparato_da               Int?
+  user_ft_preparato             User?     @relation("FtPreparatoDa", fields: [ft_preparato_da], references: [id])
+  data_preparazione_ft          DateTime?
+  ft_consegnato                 Boolean   @default(false)
+  ft_consegnato_da              Int?
+  user_ft_consegnato            User?     @relation("FtConSegnatoDa", fields: [ft_consegnato_da], references: [id])
+  data_consegna_effettiva_ft    DateTime?
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -63,6 +78,7 @@ model Ordine {
   @@map("ordini")
   @@index([stato])
   @@index([urgente])
+  @@index([consegna_anticipata_ft])
 }
 
 model Materiale {

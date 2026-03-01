@@ -10,6 +10,8 @@ import type {
   SocketMaterialeArrivato,
   SocketFaseCompletata,
   SocketProblemaRisolto,
+  SocketFtPreparato,
+  SocketFtConsegnato,
 } from '@/types';
 
 // Alert sound for bloccante problems (short beep via Web Audio API)
@@ -177,6 +179,54 @@ export function useSocket() {
       queryClient.invalidateQueries({ queryKey: ['ordine', data.ordine_id] });
     });
 
+    // ── Event: Falsotelaio preparato ──
+    socket.on('ft_preparato', (data: SocketFtPreparato) => {
+      const notification: AppNotification = {
+        id: makeId(),
+        type: 'ft_preparato',
+        title: 'Falsotelaio preparato',
+        message: `${data.numero_conferma} (${data.cliente}) - Preparato da ${data.preparato_da}`,
+        ordine_id: data.ordine_id,
+        numero_conferma: data.numero_conferma,
+        timestamp: data.data_preparazione,
+        read: false,
+      };
+      addNotification(notification);
+      showBrowserNotification(
+        'Falsotelaio preparato',
+        `${data.numero_conferma} - Preparato da ${data.preparato_da}`,
+        `ft-preparato-${data.ordine_id}`,
+      );
+
+      queryClient.invalidateQueries({ queryKey: ['ordini'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['ordini', data.ordine_id] });
+    });
+
+    // ── Event: Falsotelaio consegnato ──
+    socket.on('ft_consegnato', (data: SocketFtConsegnato) => {
+      const notification: AppNotification = {
+        id: makeId(),
+        type: 'ft_consegnato',
+        title: 'Falsotelaio consegnato',
+        message: `${data.numero_conferma} (${data.cliente}) - Consegnato da ${data.consegnato_da}`,
+        ordine_id: data.ordine_id,
+        numero_conferma: data.numero_conferma,
+        timestamp: data.data_consegna,
+        read: false,
+      };
+      addNotification(notification);
+      showBrowserNotification(
+        'Falsotelaio consegnato',
+        `${data.numero_conferma} (${data.cliente})`,
+        `ft-consegnato-${data.ordine_id}`,
+      );
+
+      queryClient.invalidateQueries({ queryKey: ['ordini'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['ordini', data.ordine_id] });
+    });
+
     return () => {
       socket.off('connect');
       socket.off('disconnect');
@@ -184,6 +234,8 @@ export function useSocket() {
       socket.off('materiale_arrivato');
       socket.off('fase_completata');
       socket.off('problema_risolto');
+      socket.off('ft_preparato');
+      socket.off('ft_consegnato');
       disconnectSocket();
       setConnected(false);
       connectedRef.current = false;

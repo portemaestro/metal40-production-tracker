@@ -27,6 +27,9 @@ export interface CreateOrdineData {
   verniciatura_necessaria?: boolean;
   urgente?: boolean;
   data_tassativa?: string | null;
+  consegna_anticipata_ft?: boolean;
+  data_consegna_ft?: string | null;
+  tipo_consegna_ft?: string | null;
   pdf_path?: string | null;
   note_generali?: string | null;
   materiali_pdf?: MaterialePdf[];
@@ -43,6 +46,9 @@ export interface UpdateOrdineData {
   verniciatura_necessaria?: boolean;
   urgente?: boolean;
   data_tassativa?: string | null;
+  consegna_anticipata_ft?: boolean;
+  data_consegna_ft?: string | null;
+  tipo_consegna_ft?: string | null;
   note_generali?: string | null;
   stato?: string;
 }
@@ -70,4 +76,14 @@ export async function updateOrdine(id: number, data: UpdateOrdineData) {
 export async function deleteOrdine(id: number) {
   const res = await api.delete<ApiResponse<null>>(`/ordini/${id}`);
   return res.data;
+}
+
+export async function markFtPreparato(id: number) {
+  const res = await api.post<ApiResponse<Ordine>>(`/ordini/${id}/ft-preparato`);
+  return res.data.data;
+}
+
+export async function markFtConsegnato(id: number) {
+  const res = await api.post<ApiResponse<Ordine>>(`/ordini/${id}/ft-consegnato`);
+  return res.data.data;
 }

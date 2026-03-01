@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listOrdini, getOrdine, createOrdine, updateOrdine, deleteOrdine } from '@/services/ordini';
+import { listOrdini, getOrdine, createOrdine, updateOrdine, deleteOrdine, markFtPreparato, markFtConsegnato } from '@/services/ordini';
 import type { ListOrdiniParams, CreateOrdineData, UpdateOrdineData } from '@/services/ordini';
 
 export function useOrdini(params: ListOrdiniParams = {}) {
@@ -46,6 +46,31 @@ export function useDeleteOrdine() {
     mutationFn: (id: number) => deleteOrdine(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordini'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export function useMarkFtPreparato() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => markFtPreparato(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['ordini'] });
+      queryClient.invalidateQueries({ queryKey: ['ordini', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['fasi'] });
+    },
+  });
+}
+
+export function useMarkFtConsegnato() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => markFtConsegnato(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['ordini'] });
+      queryClient.invalidateQueries({ queryKey: ['ordini', data.id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
