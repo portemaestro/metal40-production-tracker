@@ -55,3 +55,34 @@ export const paginationSchema = z.object({
 export const idParamSchema = z.object({
   id: z.coerce.number().int().positive('ID non valido'),
 });
+
+// ── Schemi utenti admin ──
+
+export const createUserSchema = z.object({
+  nome: z.string().min(1, 'Nome obbligatorio').max(50),
+  cognome: z.string().min(1, 'Cognome obbligatorio').max(50),
+  email: z.string().email('Email non valida'),
+  pin: z
+    .string()
+    .length(4, 'Il PIN deve essere di 4 cifre')
+    .regex(/^\d{4}$/, 'Il PIN deve contenere solo numeri'),
+  ruolo: z.enum(['ufficio', 'operatore'], { errorMap: () => ({ message: 'Ruolo non valido' }) }),
+  reparti: z.array(z.string()).optional().default([]),
+}).refine(
+  (data) => data.ruolo !== 'operatore' || (data.reparti && data.reparti.length > 0),
+  { message: 'Un operatore deve avere almeno un reparto assegnato', path: ['reparti'] }
+);
+
+export const updateUserSchema = z.object({
+  nome: z.string().min(1, 'Nome obbligatorio').max(50).optional(),
+  cognome: z.string().min(1, 'Cognome obbligatorio').max(50).optional(),
+  email: z.string().email('Email non valida').optional(),
+  pin: z
+    .string()
+    .length(4, 'Il PIN deve essere di 4 cifre')
+    .regex(/^\d{4}$/, 'Il PIN deve contenere solo numeri')
+    .optional(),
+  ruolo: z.enum(['ufficio', 'operatore'], { errorMap: () => ({ message: 'Ruolo non valido' }) }).optional(),
+  reparti: z.array(z.string()).optional(),
+  attivo: z.boolean().optional(),
+});

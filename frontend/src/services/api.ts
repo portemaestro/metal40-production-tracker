@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { LoginRequest, LoginResponse, ApiResponse, User, LoginUser } from '@/types';
+import type { LoginRequest, LoginResponse, ApiResponse, User, LoginUser, AdminUser, CreateUserRequest, UpdateUserRequest } from '@/types';
 import { API_BASE_URL, TOKEN_KEY } from '@/utils/constants';
 
 const api = axios.create({
@@ -51,6 +51,27 @@ export async function getMeApi(): Promise<ApiResponse<{ user: User }>> {
 
 export async function logoutApi(): Promise<void> {
   await api.post('/auth/logout');
+}
+
+// Admin API
+export async function getAdminUsers(): Promise<ApiResponse<{ users: AdminUser[] }>> {
+  const response = await api.get<ApiResponse<{ users: AdminUser[] }>>('/admin/users');
+  return response.data;
+}
+
+export async function createUserApi(data: CreateUserRequest): Promise<ApiResponse<{ user: AdminUser }>> {
+  const response = await api.post<ApiResponse<{ user: AdminUser }>>('/admin/users', data);
+  return response.data;
+}
+
+export async function updateUserApi(id: number, data: UpdateUserRequest): Promise<ApiResponse<{ user: AdminUser }>> {
+  const response = await api.put<ApiResponse<{ user: AdminUser }>>(`/admin/users/${id}`, data);
+  return response.data;
+}
+
+export async function deleteUserApi(id: number): Promise<ApiResponse<null>> {
+  const response = await api.delete<ApiResponse<null>>(`/admin/users/${id}`);
+  return response.data;
 }
 
 export default api;

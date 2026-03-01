@@ -77,4 +77,9 @@ export const TIPI_CONSEGNA_FT_LABELS: Record<string, string> = {
   kit_montaggio: 'Kit Montaggio (spedizione)',
 };
 
+export const RUOLI_LABELS: Record<string, string> = {
+  ufficio: 'Ufficio',
+  operatore: 'Operatore',
+};
+
 export const TOKEN_KEY = 'metal40_token';

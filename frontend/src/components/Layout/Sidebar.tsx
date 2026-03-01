@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, Boxes, AlertTriangle, X, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Package, Boxes, AlertTriangle, X, ClipboardList, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
@@ -20,6 +20,7 @@ const UFFICIO_NAV: NavItem[] = [
   { to: '/ordini', label: 'Ordini', icon: Package },
   { to: '/materiali', label: 'Materiali', icon: Boxes },
   { to: '/problemi', label: 'Problemi', icon: AlertTriangle },
+  { to: '/admin/utenti', label: 'Gestione Utenti', icon: Users },
 ];
 
 const OPERATORE_NAV: NavItem[] = [

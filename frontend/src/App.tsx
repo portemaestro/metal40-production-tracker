@@ -14,6 +14,7 @@ import { OrdineDetailPage } from '@/pages/OrdineDetailPage';
 import { OrdineFormPage } from '@/pages/OrdineFormPage';
 import { MaterialiPage } from '@/pages/MaterialiPage';
 import { ProblemiPage } from '@/pages/ProblemiPage';
+import { AdminUsersPage } from '@/pages/AdminUsersPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { InstallPrompt } from '@/components/common/InstallPrompt';
 import { Loader2 } from 'lucide-react';
@@ -98,6 +99,7 @@ function AppRoutes() {
         <Route path="/ordini/:id/modifica" element={<OrdineFormPage />} />
         <Route path="/materiali" element={<MaterialiPage />} />
         <Route path="/problemi" element={<ProblemiPage />} />
+        <Route path="/admin/utenti" element={<AdminUsersPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

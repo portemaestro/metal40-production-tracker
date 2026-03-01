@@ -322,6 +322,37 @@ export interface SocketFtConsegnato {
   data_consegna: string;
 }
 
+// Admin user management types
+export interface AdminUser {
+  id: number;
+  nome: string;
+  cognome: string;
+  email: string;
+  ruolo: UserRole;
+  reparti: string[];
+  attivo: boolean;
+  created_at: string;
+}
+
+export interface CreateUserRequest {
+  nome: string;
+  cognome: string;
+  email: string;
+  pin: string;
+  ruolo: UserRole;
+  reparti: string[];
+}
+
+export interface UpdateUserRequest {
+  nome?: string;
+  cognome?: string;
+  email?: string;
+  pin?: string;
+  ruolo?: UserRole;
+  reparti?: string[];
+  attivo?: boolean;
+}
+
 export type SocketEventType = 'problema_segnalato' | 'materiale_arrivato' | 'fase_completata' | 'problema_risolto' | 'ft_preparato' | 'ft_consegnato';
 
 export interface AppNotification {

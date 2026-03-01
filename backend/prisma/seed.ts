@@ -11,7 +11,7 @@ async function main() {
     update: {},
     create: {
       nome: 'Giuseppe',
-      cognome: 'Rossi',
+      cognome: 'Mazzaglia',
       email: 'giuseppe@metal40.it',
       pin: hashedPin,
       ruolo: 'ufficio',

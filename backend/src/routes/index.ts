@@ -7,6 +7,7 @@ import problemiRoutes from './problemi';
 import noteRoutes from './note';
 import dashboardRoutes from './dashboard';
 import uploadRoutes from './upload';
+import adminRoutes from './admin';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/problemi', problemiRoutes);
 router.use('/note', noteRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/admin', adminRoutes);
 
 export default router;
