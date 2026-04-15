@@ -27,7 +27,11 @@ export function CompletePhaseDialog({ open, onOpenChange, fase, onSuccess }: Com
   const [photos, setPhotos] = useState<string[]>([]);
   const mutation = useCompleteFase();
 
+  const [submitting, setSubmitting] = useState(false);
+
   const handleConfirm = async () => {
+    if (submitting) return;
+    setSubmitting(true);
     try {
       await mutation.mutateAsync({
         id: fase.id,
@@ -42,6 +46,8 @@ export function CompletePhaseDialog({ open, onOpenChange, fase, onSuccess }: Com
       onSuccess?.();
     } catch {
       // Error handled by mutation
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -91,7 +97,7 @@ export function CompletePhaseDialog({ open, onOpenChange, fase, onSuccess }: Com
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={mutation.isPending}>
             Annulla
           </Button>
-          <Button onClick={handleConfirm} disabled={mutation.isPending} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={handleConfirm} disabled={mutation.isPending || submitting} className="bg-green-600 hover:bg-green-700">
             {mutation.isPending ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Completamento...</>
             ) : (

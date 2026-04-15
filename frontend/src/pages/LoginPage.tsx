@@ -45,7 +45,7 @@ export function LoginPage() {
   const handleSubmit = useCallback(async () => {
     if (!selectedUser || pin.length !== 4) return;
     try {
-      await login(selectedUser.email, pin);
+      await login(selectedUser.id, pin);
       navigate('/', { replace: true });
     } catch {
       setPin('');

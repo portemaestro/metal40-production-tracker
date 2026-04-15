@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['logo.svg', 'favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Metal 4.0 Produzione',
@@ -51,7 +51,7 @@ export default defineConfig({
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60, // 1 hour
+                maxAgeSeconds: 60 * 5, // 5 minuti
               },
               networkTimeoutSeconds: 10,
               cacheableResponse: {

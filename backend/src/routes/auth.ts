@@ -34,7 +34,6 @@ router.get(
         id: true,
         nome: true,
         cognome: true,
-        email: true,
         ruolo: true,
       },
       orderBy: [{ ruolo: 'asc' }, { cognome: 'asc' }],
@@ -50,12 +49,12 @@ router.post(
   loginLimiter,
   validateBody(loginSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const { email, pin } = req.body;
+    const { user_id, email, pin } = req.body;
 
-    // Cerca utente per email
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    // Cerca utente per user_id (preferito) o email (retrocompatibilita')
+    const user = user_id
+      ? await prisma.user.findUnique({ where: { id: user_id } })
+      : await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
       throw new AuthenticationError('Credenziali non valide');
@@ -75,7 +74,7 @@ router.post(
     // Genera JWT (scadenza 8 ore)
     const payload: JwtPayload = {
       userId: user.id,
-      email: user.email!,
+      email: user.email || `user-${user.id}@metal40.local`,
       ruolo: user.ruolo as 'ufficio' | 'operatore',
     };
 
@@ -106,6 +105,28 @@ router.post(
         reparti: user.reparti,
       },
     });
+  }),
+);
+
+// ── POST /api/auth/refresh ── (rinnova token prima della scadenza)
+router.post(
+  '/refresh',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    // Genera un nuovo token con lo stesso payload
+    const payload: JwtPayload = {
+      userId: req.user!.userId,
+      email: req.user!.email,
+      ruolo: req.user!.ruolo,
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET!, {
+      expiresIn: '8h',
+    });
+
+    logger.info('Token rinnovato', { userId: req.user!.userId });
+
+    return success(res, { token });
   }),
 );
 

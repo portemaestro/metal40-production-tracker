@@ -7,11 +7,11 @@ export function useAuth() {
 
   const isAuthenticated = !!token && !!user;
 
-  const login = useCallback(async (email: string, pin: string) => {
+  const login = useCallback(async (userId: number, pin: string) => {
     setLoading(true);
     clearError();
     try {
-      const response = await loginApi({ email, pin });
+      const response = await loginApi({ user_id: userId, pin });
       setToken(response.data.token);
       setUser(response.data.user);
     } catch (err: unknown) {

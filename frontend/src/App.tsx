@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
 import { useSocket } from '@/hooks/useSocket';
+import { useTokenRefresh } from '@/hooks/useTokenRefresh';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
@@ -17,7 +18,7 @@ import { ProblemiPage } from '@/pages/ProblemiPage';
 import { AdminUsersPage } from '@/pages/AdminUsersPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { InstallPrompt } from '@/components/common/InstallPrompt';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle, X } from 'lucide-react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +51,21 @@ function RoleDashboard() {
     return <OperatorDashboardPage />;
   }
   return <DashboardPage />;
+}
+
+function TokenExpiryBanner() {
+  const { showExpiryWarning, dismissWarning } = useTokenRefresh();
+  if (!showExpiryWarning) return null;
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-white px-4 py-2 flex items-center justify-center gap-2 text-sm">
+      <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+      <span>La sessione sta per scadere. Salva il tuo lavoro.</span>
+      <button onClick={dismissWarning} className="ml-2 p-1 hover:bg-amber-600 rounded">
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
 }
 
 function AppRoutes() {
@@ -110,6 +126,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <TokenExpiryBanner />
         <AppRoutes />
         <InstallPrompt />
       </BrowserRouter>

@@ -41,7 +41,7 @@ export function OrdineNoteProbCard({ ordineId, note, problemi }: OrdineNoteProbC
               Note ({note.length})
             </TabsTrigger>
             <TabsTrigger value="problemi">
-              <AlertTriangle className="h-4 w-4 mr-1" />
+              <AlertTriangle className="h-4 w-4 mr-1 text-red-500" />
               Problemi ({problemi.length})
             </TabsTrigger>
           </TabsList>

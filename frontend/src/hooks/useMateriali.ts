@@ -23,8 +23,7 @@ export function useOrdinaMateriale() {
     mutationFn: ({ id, data }: { id: number; data: OrdinaMaterialeData }) => ordinaMateriale(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['materiali'] });
-      queryClient.invalidateQueries({ queryKey: ['ordini'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'alert'] });
     },
   });
 }
@@ -35,7 +34,6 @@ export function useArrivoMateriale() {
     mutationFn: ({ id, data }: { id: number; data: ArrivoMaterialeData }) => arrivoMateriale(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['materiali'] });
-      queryClient.invalidateQueries({ queryKey: ['ordini'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });

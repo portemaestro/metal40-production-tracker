@@ -39,8 +39,11 @@ export function ReportProblemDialog({ open, onOpenChange, ordineId, faseCorrente
 
   const isValid = tipoProblema && descrizione.trim() && gravita;
 
+  const [submitting, setSubmitting] = useState(false);
+
   const handleSubmit = async () => {
-    if (!isValid) return;
+    if (!isValid || submitting) return;
+    setSubmitting(true);
     try {
       await mutation.mutateAsync({
         ordineId,
@@ -57,6 +60,8 @@ export function ReportProblemDialog({ open, onOpenChange, ordineId, faseCorrente
       onSuccess?.();
     } catch {
       // Error handled by mutation
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -148,7 +153,7 @@ export function ReportProblemDialog({ open, onOpenChange, ordineId, faseCorrente
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={mutation.isPending}>
             Annulla
           </Button>
-          <Button onClick={handleSubmit} disabled={!isValid || mutation.isPending} variant="destructive">
+          <Button onClick={handleSubmit} disabled={!isValid || mutation.isPending || submitting} variant="destructive">
             {mutation.isPending ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Invio...</>
             ) : (

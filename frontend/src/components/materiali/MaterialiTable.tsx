@@ -27,6 +27,7 @@ export function MaterialiTable({ data, showOrdine = false }: MaterialiTableProps
   const navigate = useNavigate();
   const isUfficio = user?.ruolo === 'ufficio';
   const [ordinaDialogMat, setOrdinaDialogMat] = useState<Materiale | null>(null);
+  const [arrivoInCorso, setArrivoInCorso] = useState<number | null>(null);
   const arrivoMutation = useArrivoMateriale();
 
   function getMaterialeStato(m: Materiale): string {
@@ -36,8 +37,13 @@ export function MaterialiTable({ data, showOrdine = false }: MaterialiTableProps
   }
 
   function handleArrivo(m: Materiale) {
+    if (arrivoInCorso === m.id) return; // Previeni doppio click
+    setArrivoInCorso(m.id);
     const oggi = new Date().toISOString().split('T')[0];
-    arrivoMutation.mutate({ id: m.id, data: { data_arrivo_effettivo: oggi } });
+    arrivoMutation.mutate(
+      { id: m.id, data: { data_arrivo_effettivo: oggi } },
+      { onSettled: () => setArrivoInCorso(null) }
+    );
   }
 
   if (data.length === 0) {
@@ -98,18 +104,18 @@ export function MaterialiTable({ data, showOrdine = false }: MaterialiTableProps
                   <TableCell>
                     <div className="flex gap-1">
                       {isUfficio && !m.ordine_effettuato && (
-                        <Button variant="outline" size="sm" onClick={() => setOrdinaDialogMat(m)}>
-                          <ShoppingCart className="h-3 w-3" />
+                        <Button variant="outline" className="min-w-[44px] min-h-[44px]" onClick={() => setOrdinaDialogMat(m)}>
+                          <ShoppingCart className="h-4 w-4" />
                         </Button>
                       )}
                       {m.ordine_effettuato && !m.arrivato && (
                         <Button
                           variant="outline"
-                          size="sm"
+                          className="min-w-[44px] min-h-[44px]"
                           onClick={() => handleArrivo(m)}
-                          disabled={arrivoMutation.isPending}
+                          disabled={arrivoInCorso === m.id}
                         >
-                          <Check className="h-3 w-3" />
+                          <Check className="h-4 w-4" />
                         </Button>
                       )}
                     </div>

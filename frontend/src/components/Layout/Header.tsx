@@ -1,5 +1,7 @@
-import { LogOut, Menu } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { LogOut, Menu, WifiOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotificationStore } from '@/stores/notificationStore';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 
 interface HeaderProps {
@@ -8,27 +10,46 @@ interface HeaderProps {
 
 export function Header({ onToggleSidebar }: HeaderProps) {
   const { user, logout } = useAuth();
+  const isConnected = useNotificationStore((s) => s.isConnected);
+  const [showOfflineBanner, setShowOfflineBanner] = useState(false);
+
+  // Mostra il banner solo dopo 5 secondi di disconnessione (evita flash su brevi disconnessioni)
+  useEffect(() => {
+    if (!isConnected) {
+      const timer = setTimeout(() => setShowOfflineBanner(true), 5000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowOfflineBanner(false);
+    }
+  }, [isConnected]);
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-      <button
-        onClick={onToggleSidebar}
-        className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground md:hidden"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-
-      <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-          M4
+    <>
+      {showOfflineBanner && (
+        <div className="bg-amber-500 text-white px-4 py-1.5 flex items-center justify-center gap-2 text-sm">
+          <WifiOff className="h-4 w-4" />
+          <span>Connessione al server persa. Le notifiche non sono attive.</span>
         </div>
-        <span className="text-lg font-semibold hidden sm:inline-block">Metal 4.0</span>
-      </div>
+      )}
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <button
+          onClick={onToggleSidebar}
+          className="inline-flex items-center justify-center rounded-md p-3 min-w-[44px] min-h-[44px] text-muted-foreground hover:bg-accent hover:text-accent-foreground md:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
 
-      <div className="flex-1" />
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold text-sm" style={{ backgroundColor: '#ff8000' }}>
+            M4
+          </div>
+          <span className="text-lg font-semibold hidden sm:inline-block">Metal 4.0</span>
+        </div>
 
-      <div className="flex items-center gap-3">
-        <NotificationDropdown />
+        <div className="flex-1" />
+
+        <div className="flex items-center gap-3">
+          <NotificationDropdown />
 
         <div className="hidden sm:flex items-center gap-2 text-sm">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-xs">
@@ -48,6 +69,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           <LogOut className="h-5 w-5" />
         </button>
       </div>
-    </header>
+      </header>
+    </>
   );
 }

@@ -4,6 +4,7 @@ import { API_BASE_URL, TOKEN_KEY } from '@/utils/constants';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000, // Fix 6: timeout 15 secondi
   headers: {
     'Content-Type': 'application/json',
   },
@@ -18,13 +19,80 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: handle 401
+// Fix 7: Retry automatico per errori di rete e 503
+api.interceptors.response.use(undefined, async (error) => {
+  const config = error.config;
+  if (!config) return Promise.reject(error);
+
+  // Retry solo per errori di rete (no response) o 503/408
+  const isRetryable = !error.response || [503, 408].includes(error.response?.status);
+  // Non ritentare POST/PUT/DELETE per evitare duplicati (solo GET)
+  const isSafeMethod = !config.method || config.method.toUpperCase() === 'GET';
+
+  if (!isRetryable || !isSafeMethod) return Promise.reject(error);
+
+  config._retryCount = config._retryCount || 0;
+  if (config._retryCount >= 2) return Promise.reject(error);
+
+  config._retryCount += 1;
+  const delay = config._retryCount * 1000; // 1s, 2s
+  await new Promise(resolve => setTimeout(resolve, delay));
+  return api(config);
+});
+
+// Flag per evitare refresh multipli contemporanei
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+async function tryRefreshToken(): Promise<string | null> {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return null;
+  try {
+    const response = await axios.post<ApiResponse<{ token: string }>>(
+      `${API_BASE_URL}/auth/refresh`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }
+    );
+    const newToken = response.data.data.token;
+    localStorage.setItem(TOKEN_KEY, newToken);
+    return newToken;
+  } catch {
+    return null;
+  }
+}
+
+// Response interceptor: handle 401 con tentativo di refresh
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Se 401 e non e' gia' un retry, prova il refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Non fare refresh su endpoint di login/refresh
+      if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
+        return Promise.reject(error);
+      }
+
+      originalRequest._retry = true;
+
+      // Evita refresh multipli contemporanei
+      if (!isRefreshing) {
+        isRefreshing = true;
+        refreshPromise = tryRefreshToken();
+      }
+
+      const newToken = await refreshPromise;
+      isRefreshing = false;
+      refreshPromise = null;
+
+      if (newToken) {
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      }
+
+      // Refresh fallito: redirect al login
       localStorage.removeItem(TOKEN_KEY);
-      // Only redirect if not already on login page
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
@@ -32,6 +100,20 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Token utils
+export function getTokenExpiry(token: string): number | null {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp ? payload.exp * 1000 : null; // ms
+  } catch {
+    return null;
+  }
+}
+
+export async function refreshTokenApi(): Promise<string | null> {
+  return tryRefreshToken();
+}
 
 // Auth API
 export async function getUsersApi(): Promise<ApiResponse<{ users: LoginUser[] }>> {

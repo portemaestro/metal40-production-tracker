@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useBlocker } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -70,7 +72,7 @@ export function OrdineForm({ defaultValues, ordine, pdfPath, materialiPdf, onSub
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, ...formState },
   } = useForm<OrdineFormValues>({
     resolver: zodResolver(ordineFormSchema),
     defaultValues: {
@@ -93,11 +95,40 @@ export function OrdineForm({ defaultValues, ordine, pdfPath, materialiPdf, onSub
     },
   });
 
+  const { isDirty } = formState;
   const urgente = watch('urgente');
   const tipoTelaio = watch('tipo_telaio');
   const consegnaAnticipatFt = watch('consegna_anticipata_ft');
+  const [submitted, setSubmitted] = useState(false);
+
+  // Avviso se l'utente naviga via con modifiche non salvate
+  const blocker = useBlocker(isDirty && !submitted);
+
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      const conferma = window.confirm('Hai modifiche non salvate. Vuoi davvero uscire?');
+      if (conferma) {
+        blocker.proceed();
+      } else {
+        blocker.reset();
+      }
+    }
+  }, [blocker]);
+
+  // Avviso per chiusura tab/refresh
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (isDirty && !submitted) {
+        e.preventDefault();
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, submitted]);
 
   function handleFormSubmit(data: OrdineFormValues) {
+    if (submitted || loading) return; // Previeni doppio submit
+    setSubmitted(true);
     // Clean empty strings to undefined for optional fields
     const cleaned = { ...data } as Record<string, unknown>;
     const optionalStringFields = ['riferimento', 'data_tassativa', 'note_generali', 'colore_telaio_interno', 'colore_telaio_esterno', 'data_consegna_ft', 'tipo_consegna_ft'];
@@ -107,6 +138,8 @@ export function OrdineForm({ defaultValues, ordine, pdfPath, materialiPdf, onSub
       }
     }
     onSubmit(cleaned as OrdineFormValues);
+    // Reset dopo un breve delay per permettere retry in caso di errore
+    setTimeout(() => setSubmitted(false), 3000);
   }
 
   return (
@@ -319,8 +352,8 @@ export function OrdineForm({ defaultValues, ordine, pdfPath, materialiPdf, onSub
 
           {/* Azioni */}
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Salvataggio...' : isEditing ? 'Salva Modifiche' : 'Crea Ordine'}
+            <Button type="submit" disabled={loading || submitted}>
+              {loading || submitted ? 'Salvataggio...' : isEditing ? 'Salva Modifiche' : 'Crea Ordine'}
             </Button>
           </div>
         </CardContent>

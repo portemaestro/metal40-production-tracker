@@ -40,11 +40,15 @@ export function validateQuery(schema: ZodSchema) {
 // ── Schemi comuni ──
 
 export const loginSchema = z.object({
-  email: z.string().email('Email non valida'),
+  user_id: z.coerce.number().int().positive('ID utente non valido').optional(),
+  email: z.string().email('Email non valida').optional(),
   pin: z
     .string()
     .length(4, 'Il PIN deve essere di 4 cifre')
     .regex(/^\d{4}$/, 'Il PIN deve contenere solo numeri'),
+}).refine(data => data.user_id || data.email, {
+  message: 'Specificare user_id o email',
+  path: ['user_id'],
 });
 
 export const paginationSchema = z.object({

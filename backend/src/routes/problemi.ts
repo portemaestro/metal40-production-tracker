@@ -304,12 +304,23 @@ router.put(
         },
       });
 
-      // Se era bloccante e l'ordine è bloccato, ripristina in_produzione
+      // Se era bloccante e l'ordine è bloccato, controlla se ci sono altri problemi bloccanti aperti
       if (problema.gravita === 'alta_bloccante' && problema.ordine.stato === 'bloccato') {
-        await tx.ordine.update({
-          where: { id: problema.ordine_id },
-          data: { stato: 'in_produzione' },
+        const altriBloccanti = await tx.problema.count({
+          where: {
+            ordine_id: problema.ordine_id,
+            gravita: 'alta_bloccante',
+            risolto: false,
+            id: { not: id }, // Escludi il problema appena risolto
+          },
         });
+        // Sblocca l'ordine solo se non ci sono altri problemi bloccanti
+        if (altriBloccanti === 0) {
+          await tx.ordine.update({
+            where: { id: problema.ordine_id },
+            data: { stato: 'in_produzione' },
+          });
+        }
       }
 
       // Audit log

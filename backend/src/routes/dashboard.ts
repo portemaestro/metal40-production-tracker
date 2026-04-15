@@ -132,6 +132,8 @@ router.get(
           data_segnalazione: true,
           data_risoluzione: true,
         },
+        take: 200,
+        orderBy: { data_risoluzione: 'desc' },
       }),
 
       // Tempo medio produzione (giorni) per ordini completati nel periodo
@@ -144,6 +146,8 @@ router.get(
           created_at: true,
           updated_at: true,
         },
+        take: 200,
+        orderBy: { updated_at: 'desc' },
       }),
 
       // Falsetelaio anticipati in attesa (non ancora consegnati)
@@ -273,6 +277,7 @@ router.get(
           },
         },
         orderBy: { ordine: { created_at: 'desc' } },
+        take: 100,
       }),
 
       // Problemi aperti (non risolti)
@@ -294,6 +299,7 @@ router.get(
           { gravita: 'desc' },
           { data_segnalazione: 'desc' },
         ],
+        take: 50,
       }),
 
       // Materiali in arrivo oggi/domani
@@ -314,6 +320,7 @@ router.get(
           },
         },
         orderBy: { data_consegna_prevista: 'asc' },
+        take: 50,
       }),
 
       // Falsotelaio anticipati in attesa
@@ -329,6 +336,7 @@ router.get(
           },
         },
         orderBy: { data_consegna_ft: 'asc' },
+        take: 50,
       }),
     ]);
 

@@ -26,6 +26,7 @@ export function OrdineMaterialiCard({ materiali }: OrdineMaterialiCardProps) {
   const { user } = useAuth();
   const isUfficio = user?.ruolo === 'ufficio';
   const [ordinaDialogMat, setOrdinaDialogMat] = useState<Materiale | null>(null);
+  const [arrivoInCorso, setArrivoInCorso] = useState<number | null>(null);
   const arrivoMutation = useArrivoMateriale();
 
   function getMaterialeStato(m: Materiale): string {
@@ -35,8 +36,13 @@ export function OrdineMaterialiCard({ materiali }: OrdineMaterialiCardProps) {
   }
 
   function handleArrivo(m: Materiale) {
+    if (arrivoInCorso === m.id) return;
+    setArrivoInCorso(m.id);
     const oggi = new Date().toISOString().split('T')[0];
-    arrivoMutation.mutate({ id: m.id, data: { data_arrivo_effettivo: oggi } });
+    arrivoMutation.mutate(
+      { id: m.id, data: { data_arrivo_effettivo: oggi } },
+      { onSettled: () => setArrivoInCorso(null) }
+    );
   }
 
   const necessari = materiali.filter((m) => m.necessario);
@@ -103,21 +109,21 @@ export function OrdineMaterialiCard({ materiali }: OrdineMaterialiCardProps) {
                           {isUfficio && !m.ordine_effettuato && (
                             <Button
                               variant="outline"
-                              size="sm"
+                              className="min-h-[44px]"
                               onClick={() => setOrdinaDialogMat(m)}
                             >
-                              <ShoppingCart className="h-3 w-3 mr-1" />
+                              <ShoppingCart className="h-4 w-4 mr-1" />
                               Ordina
                             </Button>
                           )}
                           {m.ordine_effettuato && !m.arrivato && (
                             <Button
                               variant="outline"
-                              size="sm"
+                              className="min-h-[44px]"
                               onClick={() => handleArrivo(m)}
-                              disabled={arrivoMutation.isPending}
+                              disabled={arrivoInCorso === m.id}
                             >
-                              <Check className="h-3 w-3 mr-1" />
+                              <Check className="h-4 w-4 mr-1" />
                               Arrivato
                             </Button>
                           )}
