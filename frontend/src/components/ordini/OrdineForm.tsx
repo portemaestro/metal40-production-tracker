@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useBlocker } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -101,21 +100,7 @@ export function OrdineForm({ defaultValues, ordine, pdfPath, materialiPdf, onSub
   const consegnaAnticipatFt = watch('consegna_anticipata_ft');
   const [submitted, setSubmitted] = useState(false);
 
-  // Avviso se l'utente naviga via con modifiche non salvate
-  const blocker = useBlocker(isDirty && !submitted);
-
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      const conferma = window.confirm('Hai modifiche non salvate. Vuoi davvero uscire?');
-      if (conferma) {
-        blocker.proceed();
-      } else {
-        blocker.reset();
-      }
-    }
-  }, [blocker]);
-
-  // Avviso per chiusura tab/refresh
+  // Avviso per chiusura tab/refresh con modifiche non salvate
   useEffect(() => {
     function handleBeforeUnload(e: BeforeUnloadEvent) {
       if (isDirty && !submitted) {
